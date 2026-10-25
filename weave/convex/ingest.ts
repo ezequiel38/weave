@@ -19,6 +19,14 @@ const MAX_POLLS = 50; // ~12.5 minutes
 
 const SUPPORTED = new Set(["instagram", "tiktok"]);
 
+/** Spending actions are locked behind REFRESH_PASSWORD (set in the Convex env, never in code). */
+function unlocked(password: string | undefined): boolean {
+  const expected = process.env.REFRESH_PASSWORD;
+  return !expected || password === expected;
+}
+const LOCKED = { ok: false, locked: true, message: "Wrong password" };
+const result = v.object({ ok: v.boolean(), message: v.string(), locked: v.optional(v.boolean()) });
+
 function client() {
   const token = process.env.APIFY_TOKEN;
   if (!token) return null;
@@ -58,9 +66,10 @@ async function ingestItems(ctx: ActionCtx, teamId: Id<"teams">, runId: Id<"runs"
 }
 
 export const refresh = action({
-  args: { teamId: v.id("teams") },
-  returns: v.object({ ok: v.boolean(), message: v.string() }),
-  handler: async (ctx, { teamId }) => {
+  args: { teamId: v.id("teams"), password: v.optional(v.string()) },
+  returns: result,
+  handler: async (ctx, { teamId, password }) => {
+    if (!unlocked(password)) return LOCKED;
     const apify = client();
     if (!apify) {
       return { ok: false, message: "Live ingestion isn't configured yet (APIFY_TOKEN missing on the Convex deployment)." };
@@ -152,9 +161,10 @@ export const poll = internalAction({
  * handy for demos and development. Reads only (no Actor compute).
  */
 export const importDataset = action({
-  args: { teamId: v.id("teams"), datasetId: v.string() },
-  returns: v.object({ ok: v.boolean(), message: v.string() }),
-  handler: async (ctx, { teamId, datasetId }) => {
+  args: { teamId: v.id("teams"), datasetId: v.string(), password: v.optional(v.string()) },
+  returns: result,
+  handler: async (ctx, { teamId, datasetId, password }) => {
+    if (!unlocked(password)) return LOCKED;
     const apify = client();
     if (!apify) return { ok: false, message: "APIFY_TOKEN missing on the Convex deployment." };
     const runId = await ctx.runMutation(internal.ingestDb.tryStartRun, { teamId });

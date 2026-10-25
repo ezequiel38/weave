@@ -34,3 +34,16 @@ export function splitTrailingHashtags(raw: string): { body: string; tags: string
   if (!m || !body) return { body: text, tags: [] };
   return { body, tags: m[0].trim().split(/\s+/) };
 }
+
+/** Display title + remaining caption: explicit title, else the caption's first line. */
+export function titleAndRest(text: string, title?: string): { title: string; rest: string } {
+  if (title) return { title, rest: text };
+  const lines = text.split("\n");
+  const idx = lines.findIndex((l) => l.trim());
+  if (idx < 0) return { title: "Untitled post", rest: "" };
+  const { body, tags } = splitTrailingHashtags(lines[idx]);
+  return {
+    title: body || lines[idx].trim(),
+    rest: [...lines.slice(idx + 1), body ? tags.join(" ") : ""].join("\n").trim(),
+  };
+}

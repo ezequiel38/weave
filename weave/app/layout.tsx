@@ -23,7 +23,7 @@ const instrument = Instrument_Serif({
 });
 
 export const metadata: Metadata = {
-  title: "Weave — every post, one story",
+  title: "Weave",
   description:
     "Weave gathers a team's posts from Instagram and TikTok and merges the overlapping ones into single stories, keeping every original source.",
 };

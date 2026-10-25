@@ -9,7 +9,6 @@ import {
   Images,
   Layers,
   Scissors,
-  Sparkles,
   TriangleAlert,
 } from "lucide-react";
 import { api } from "@/convex/_generated/api";
@@ -312,11 +311,6 @@ export function StoryCard({ story, index = 0, className }: { story: UnifiedStory
           )}
           <span aria-hidden>·</span>
           <time dateTime={new Date(story.lastPostedAt).toISOString()}>{timeAgo(story.lastPostedAt)}</time>
-          {story.summarySource === "claude" && (
-            <span className="inline-flex items-center gap-1" title="Summary written by Claude from the original posts">
-              <Sparkles className="size-3" /> Claude
-            </span>
-          )}
           {story.origin === "sample" && (
             <Badge variant="outline" className="h-5 rounded-full border-amber-300 bg-amber-50 px-2 text-[10px] uppercase tracking-wide text-amber-900">
               Sample

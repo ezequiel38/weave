@@ -28,8 +28,8 @@ export default function Home() {
       <div className="pointer-events-none absolute inset-x-0 top-0 h-[640px] bg-[radial-gradient(60%_50%_at_70%_10%,oklch(0.9_0.05_330/.55),transparent),radial-gradient(50%_40%_at_10%_20%,oklch(0.9_0.05_250/.5),transparent)]" />
       <header className="relative mx-auto flex h-16 w-full max-w-6xl items-center px-4 sm:px-6">
         <Logo />
-        <ThemeToggle className="ml-auto" />
         <span className="ml-auto text-xs text-muted-foreground">Built at Cal Hacks 13.0</span>
+        <ThemeToggle className="ml-3" />
       </header>
 
       <main className="relative mx-auto grid w-full max-w-6xl flex-1 items-center gap-12 px-4 pb-16 pt-8 sm:px-6 lg:grid-cols-[1.05fr_1fr] lg:pt-16">

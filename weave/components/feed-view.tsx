@@ -4,7 +4,7 @@ import { useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { useMutation, useQuery } from "convex/react";
 import { toast } from "sonner";
-import { ArrowRight, Columns2, LayoutGrid, Layers, List, ListOrdered, Sparkles, Trash2 } from "lucide-react";
+import { ArrowRight, LayoutGrid, Layers, List, ListOrdered, Sparkles, Trash2 } from "lucide-react";
 import { api } from "@/convex/_generated/api";
 import type { Doc } from "@/convex/_generated/dataModel";
 import { cn } from "@/lib/utils";
@@ -14,7 +14,7 @@ import { StoryCard } from "./story-card";
 import { PostCard } from "./post-card";
 import { PlatformStack, type Platform } from "./platform";
 
-type Mode = "unified" | "raw" | "compare";
+type Mode = "unified" | "raw";
 type Layout = "grid" | "list";
 const LAYOUT_KEY = "weave.layout";
 const layoutListeners = new Set<() => void>();
@@ -31,7 +31,6 @@ function setLayout(l: Layout) {
 const MODES: { id: Mode; label: string; icon: typeof Layers }[] = [
   { id: "unified", label: "Woven", icon: Layers },
   { id: "raw", label: "Raw feed", icon: ListOrdered },
-  { id: "compare", label: "Compare", icon: Columns2 },
 ];
 
 function FeedSkeleton() {
@@ -131,14 +130,13 @@ export function FeedView({ team }: { team: Doc<"teams"> }) {
                 className={cn(
                   "inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm text-muted-foreground transition-colors",
                   mode === m.id ? "bg-foreground text-background" : "hover:text-foreground",
-                  m.id === "compare" && "hidden lg:inline-flex",
                 )}
               >
                 <m.icon className="size-3.5" /> {m.label}
               </button>
             ))}
           </div>
-          {mode !== "compare" && (
+          {(
             <div role="group" aria-label="Layout" className="inline-flex rounded-full border bg-card p-1">
               {([
                 { id: "grid", label: "Grid view", icon: LayoutGrid },
@@ -193,34 +191,11 @@ export function FeedView({ team }: { team: Doc<"teams"> }) {
               ))}
             </div>
           )
-        ) : mode === "raw" ? (
+        ) : (
           <div className={grid ? "grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" : "mx-auto max-w-xl space-y-4"}>
             {posts.map((p, i) => (
               <PostCard key={p._id} post={p} index={i} className="h-full" />
             ))}
-          </div>
-        ) : (
-          <div className="grid grid-cols-[minmax(0,5fr)_minmax(0,7fr)] gap-8">
-            <div>
-              <h2 className="sticky top-16 z-10 mb-3 bg-background/90 py-2 text-sm font-medium backdrop-blur">
-                Before · {posts.length} separate posts
-              </h2>
-              <div className="space-y-3">
-                {posts.map((p, i) => (
-                  <PostCard key={p._id} post={p} index={i} />
-                ))}
-              </div>
-            </div>
-            <div>
-              <h2 className="sticky top-16 z-10 mb-3 bg-background/90 py-2 text-sm font-medium backdrop-blur">
-                After · {stories.length} stories, nothing lost
-              </h2>
-              <div className="space-y-6">
-                {stories.map((s, i) => (
-                  <StoryCard key={s._id} story={s} index={i} />
-                ))}
-              </div>
-            </div>
           </div>
         )}
       </div>

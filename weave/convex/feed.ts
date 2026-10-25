@@ -114,3 +114,38 @@ export const stats = query({
     };
   },
 });
+
+/** Landing-page example: the richest real merged story (most posts, Claude summary, has media). */
+export const showcase = query({
+  args: {},
+  handler: async (ctx) => {
+    const stories = (await ctx.db.query("stories").order("desc").take(200)).filter(
+      (s) => s.origin === "live" && s.postCount > 1 && s.mediaCount > 0,
+    );
+    stories.sort(
+      (a, b) =>
+        b.postCount - a.postCount ||
+        Number(b.summarySource === "claude") - Number(a.summarySource === "claude") ||
+        b.lastPostedAt - a.lastPostedAt,
+    );
+    const story = stories[0];
+    if (!story) return null;
+    const team = await ctx.db.get(story.teamId);
+    const links = await ctx.db.query("storyPosts").withIndex("by_story", (q) => q.eq("storyId", story._id)).take(4);
+    const posts = [];
+    for (const l of links) {
+      const post = await ctx.db.get(l.postId);
+      if (!post) continue;
+      const withM = await withMedia(ctx, post);
+      posts.push({ _id: post._id, platform: post.platform, text: post.text, media: withM.media.slice(0, 1) });
+    }
+    return {
+      title: story.title,
+      summary: story.summary,
+      postCount: story.postCount,
+      platforms: story.platforms,
+      team: team ? { name: team.name, slug: team.slug } : null,
+      posts,
+    };
+  },
+});

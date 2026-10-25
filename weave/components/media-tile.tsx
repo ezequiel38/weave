@@ -92,8 +92,8 @@ export function MediaTile({
         </div>
       ) : failed || (isVideo && !media.thumbnailUrl) ? (
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 bg-muted text-muted-foreground">
-          {isVideo ? <Play className="size-6" /> : <ImageOff className="size-5" />}
-          <span className="text-[11px]">{isVideo ? "Video" : "Image unavailable"}</span>
+          {!(compact && isVideo) && (isVideo ? <Play className="size-6" /> : <ImageOff className="size-5" />)}
+          {!compact && <span className="text-[11px]">{isVideo ? "Video" : "Image unavailable"}</span>}
         </div>
       ) : (
         // eslint-disable-next-line @next/next/no-img-element -- remote CDN media of unknown dimensions
