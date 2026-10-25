@@ -21,7 +21,7 @@ export function Logo({ className }: { className?: string }) {
   return (
     <Link href="/" className={cn("inline-flex items-center gap-2", className)}>
       <WeaveMark />
-      <span className="font-display text-2xl leading-none">Weave</span>
+      <span className="text-xl font-normal leading-none tracking-[-0.03em]">weave</span>
     </Link>
   );
 }

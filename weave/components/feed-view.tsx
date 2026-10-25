@@ -29,7 +29,7 @@ function setLayout(l: Layout) {
 }
 
 const MODES: { id: Mode; label: string; icon: typeof Layers }[] = [
-  { id: "unified", label: "Unified", icon: Layers },
+  { id: "unified", label: "Woven", icon: Layers },
   { id: "raw", label: "Raw feed", icon: ListOrdered },
   { id: "compare", label: "Compare", icon: Columns2 },
 ];
@@ -187,9 +187,9 @@ export function FeedView({ team }: { team: Doc<"teams"> }) {
           stories.length === 0 ? (
             <p className="text-center text-sm text-muted-foreground">Posts are still being analysed into stories…</p>
           ) : (
-            <div className={grid ? "grid items-start gap-5 sm:grid-cols-2 lg:grid-cols-3" : "mx-auto max-w-2xl space-y-6"}>
+            <div className={grid ? "grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" : "mx-auto max-w-xl space-y-4"}>
               {stories.map((s, i) => (
-                <StoryCard key={s._id} story={s} index={i} />
+                <StoryCard key={s._id} story={s} index={i} className={grid ? "h-full" : undefined} />
               ))}
             </div>
           )

@@ -14,6 +14,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { PLATFORMS, PlatformBadge, PlatformGlyph, type Platform } from "./platform";
 
+/** Platforms the ingestion Actor actually covers. */
+const SUPPORTED: Platform[] = ["instagram", "tiktok"];
+
 const VERIFY = {
   verified: { label: "Verified", icon: BadgeCheck, tone: "text-emerald-700 bg-emerald-50" },
   likely: { label: "Likely official", icon: ShieldQuestion, tone: "text-sky-800 bg-sky-50" },
@@ -98,7 +101,7 @@ function AddAccount({ team }: { team: Doc<"teams"> }) {
       }}
     >
       <div className="flex gap-1.5">
-        {(Object.keys(PLATFORMS) as Platform[]).map((p) => (
+        {SUPPORTED.map((p) => (
           <button
             key={p}
             type="button"
@@ -133,7 +136,7 @@ function AddAccount({ team }: { team: Doc<"teams"> }) {
 export function AccountsView({ team }: { team: Doc<"teams"> }) {
   const accounts = useQuery(api.accounts.listForTeam, { teamId: team._id });
   // Stable order (not by status) so rows don't jump when toggled.
-  const sorted = [...(accounts ?? [])].sort((a, b) => a.platform.localeCompare(b.platform) || a._creationTime - b._creationTime);
+  const sorted = [...(accounts ?? [])].filter((a) => SUPPORTED.includes(a.platform)).sort((a, b) => a.platform.localeCompare(b.platform) || a._creationTime - b._creationTime);
   const approved = sorted.filter((a) => a.status === "approved").length;
 
   return (

@@ -26,7 +26,9 @@ export function duration(sec: number | undefined): string | null {
  * Split a run of hashtags off the end of a caption so it can be shown small.
  * Inline tags ("Setting the tone for #ElClásico ⚒️") stay in the body.
  */
-export function splitTrailingHashtags(text: string): { body: string; tags: string[] } {
+export function splitTrailingHashtags(raw: string): { body: string; tags: string[] } {
+  // NFKC turns "𝐈 𝐜𝐡𝐨𝐬𝐞" (math-bold Unicode) into plain letters in our font; "##tag" → "#tag".
+  const text = raw.normalize("NFKC").replace(/#{2,}(?=[\p{L}\p{N}_])/gu, "#");
   const m = text.match(/(?:\s*#[\p{L}\p{N}_]+)+\s*$/u);
   const body = m ? text.slice(0, m.index).trimEnd() : text;
   if (!m || !body) return { body: text, tags: [] };

@@ -4,8 +4,8 @@ import { PlatformBadge, PlatformStack, type Platform } from "./platform";
 const STRANDS: { platform: Platform; line: string; hue: number; rot: string }[] = [
   { platform: "instagram", line: "Welcome photo", hue: 330, rot: "-rotate-3" },
   { platform: "tiktok", line: "Behind the scenes", hue: 290, rot: "rotate-2" },
-  { platform: "youtube", line: "First interview", hue: 15, rot: "-rotate-1" },
-  { platform: "x", line: "Official statement", hue: 230, rot: "rotate-3" },
+  { platform: "instagram", line: "Matchday carousel", hue: 15, rot: "-rotate-1" },
+  { platform: "tiktok", line: "Same clip, reposted", hue: 230, rot: "rotate-3" },
 ];
 
 /** Illustrative only: four posts converging into one story card. */

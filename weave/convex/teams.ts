@@ -1,5 +1,7 @@
 import { ConvexError, v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import { internalAction, internalMutation, mutation, query, type QueryCtx } from "./_generated/server";
+import { internal } from "./_generated/api";
+import type { Doc } from "./_generated/dataModel";
 
 const PALETTE = ["#4f46e5", "#0f766e", "#b45309", "#be123c", "#1d4ed8", "#7c3aed", "#15803d"];
 
@@ -51,16 +53,48 @@ export const create = mutation({
 export const list = query({
   args: {},
   handler: async (ctx) => {
-    return await ctx.db.query("teams").take(50);
+    const teams = await ctx.db.query("teams").take(50);
+    return await Promise.all(teams.map((team) => withLogo(ctx, team)));
   },
 });
 
 export const bySlug = query({
   args: { slug: v.string() },
   handler: async (ctx, { slug }) => {
-    return await ctx.db
+    const team = await ctx.db
       .query("teams")
       .withIndex("by_slug", (q) => q.eq("slug", slug))
       .unique();
+    return team ? await withLogo(ctx, team) : null;
+  },
+});
+
+async function withLogo(ctx: QueryCtx, team: Doc<"teams">) {
+  return { ...team, logoUrl: team.logoStorageId ? await ctx.storage.getUrl(team.logoStorageId) : null };
+}
+
+/** Copy a logo image (e.g. the club's verified TikTok avatar) into storage and attach it. */
+export const setLogo = internalAction({
+  args: { slug: v.string(), url: v.string() },
+  returns: v.null(),
+  handler: async (ctx, { slug, url }) => {
+    const res = await fetch(url, { signal: AbortSignal.timeout(10_000) });
+    const type = res.headers.get("content-type") ?? "";
+    if (!res.ok || !type.startsWith("image/")) throw new Error(`Logo fetch failed: ${res.status} ${type}`);
+    const storageId = await ctx.storage.store(await res.blob());
+    await ctx.runMutation(internal.teams.attachLogo, { slug, storageId });
+    return null;
+  },
+});
+
+export const attachLogo = internalMutation({
+  args: { slug: v.string(), storageId: v.id("_storage") },
+  returns: v.null(),
+  handler: async (ctx, { slug, storageId }) => {
+    const team = await ctx.db.query("teams").withIndex("by_slug", (q) => q.eq("slug", slug)).unique();
+    if (!team) throw new Error(`No team ${slug}`);
+    if (team.logoStorageId) await ctx.storage.delete(team.logoStorageId);
+    await ctx.db.patch(team._id, { logoStorageId: storageId });
+    return null;
   },
 });

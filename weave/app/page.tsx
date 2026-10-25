@@ -1,4 +1,5 @@
 import { Brain, Layers, Radar } from "lucide-react";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { Logo } from "@/components/logo";
 import { HeroVisual } from "@/components/hero-visual";
 import { TeamSearch } from "@/components/team-search";
@@ -7,12 +8,12 @@ const STEPS = [
   {
     icon: Radar,
     title: "Collect",
-    body: "Recent posts from the accounts you approve on Instagram, TikTok, YouTube and X, with captions, media and transcripts.",
+    body: "Recent posts from the accounts you approve on Instagram and TikTok, with captions, photos and videos.",
   },
   {
     icon: Brain,
     title: "Understand",
-    body: "Text, images and video frames are compared with Elastic vector search. Claude reviews the close calls.",
+    body: "Captions and images are compared with fast rules and Elastic semantic search. Claude reviews the close calls.",
   },
   {
     icon: Layers,
@@ -27,6 +28,7 @@ export default function Home() {
       <div className="pointer-events-none absolute inset-x-0 top-0 h-[640px] bg-[radial-gradient(60%_50%_at_70%_10%,oklch(0.9_0.05_330/.55),transparent),radial-gradient(50%_40%_at_10%_20%,oklch(0.9_0.05_250/.5),transparent)]" />
       <header className="relative mx-auto flex h-16 w-full max-w-6xl items-center px-4 sm:px-6">
         <Logo />
+        <ThemeToggle className="ml-auto" />
         <span className="ml-auto text-xs text-muted-foreground">Built at Cal Hacks 13.0</span>
       </header>
 

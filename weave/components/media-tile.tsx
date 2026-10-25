@@ -49,6 +49,7 @@ export function MediaTile({
   showPlatform = false,
   sizes,
   onOpen,
+  compact = false,
 }: {
   media: MediaLike;
   platform?: Platform;
@@ -56,6 +57,8 @@ export function MediaTile({
   showPlatform?: boolean;
   sizes?: string;
   onOpen?: () => void;
+  /** Small thumbnail: shrink the play button, hide the duration. */
+  compact?: boolean;
 }) {
   const [failed, setFailed] = useState(false);
   const src = media.kind === "image" ? media.url : (media.thumbnailUrl ?? media.url);
@@ -79,7 +82,7 @@ export function MediaTile({
     >
       {isSample ? (
         <SamplePlaceholder hue={Number(src.slice(7)) || 0} kind={media.kind} />
-      ) : directVideo && !media.thumbnailUrl ? (
+      ) : directVideo && !media.thumbnailUrl && !compact ? (
         // No poster frame from the scraper — let the browser render the first frame.
         <video src={`${media.url}#t=0.1`} preload="metadata" muted playsInline className="absolute inset-0 size-full object-cover" />
       ) : embed && !media.thumbnailUrl ? (
@@ -106,10 +109,15 @@ export function MediaTile({
       {isVideo && (
         <>
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent" />
-          <span className="pointer-events-none absolute left-1/2 top-1/2 flex size-11 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-black shadow-lg transition-transform group-hover:scale-110">
-            <Play className="size-4 translate-x-px fill-current" />
+          <span
+            className={cn(
+              "pointer-events-none absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-black shadow transition-transform group-hover:scale-110",
+              compact ? "size-6" : "size-11 shadow-lg",
+            )}
+          >
+            <Play className={cn("translate-x-px fill-current", compact ? "size-2.5" : "size-4")} />
           </span>
-          {duration(media.durationSec) && (
+          {!compact && duration(media.durationSec) && (
             <span className="absolute bottom-2 right-2 rounded bg-black/70 px-1.5 py-0.5 font-mono text-[10px] text-white">
               {duration(media.durationSec)}
             </span>

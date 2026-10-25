@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Instrument_Serif } from "next/font/google";
 import { ConvexClientProvider } from "@/components/convex-client-provider";
 import { Toaster } from "@/components/ui/sonner";
+import { ThemeProvider } from "next-themes";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -24,18 +25,21 @@ const instrument = Instrument_Serif({
 export const metadata: Metadata = {
   title: "Weave — every post, one story",
   description:
-    "Weave gathers a team's posts from Instagram, TikTok, YouTube and X and merges the overlapping ones into single stories, keeping every original source.",
+    "Weave gathers a team's posts from Instagram and TikTok and merges the overlapping ones into single stories, keeping every original source.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
+      suppressHydrationWarning
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} ${instrument.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <ConvexClientProvider>{children}</ConvexClientProvider>
-        <Toaster position="bottom-center" />
+        <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false} disableTransitionOnChange>
+          <ConvexClientProvider>{children}</ConvexClientProvider>
+          <Toaster position="bottom-center" />
+        </ThemeProvider>
       </body>
     </html>
   );

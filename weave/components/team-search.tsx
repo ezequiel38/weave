@@ -72,7 +72,7 @@ export function TeamSearch() {
               <TeamMonogram team={{ monogram: "FCB", accentColor: "#a50044" }} />
               <span className="flex-1">
                 <span className="block text-sm font-medium">FC Barcelona</span>
-                <span className="block text-xs text-muted-foreground">Demo team · 4 official accounts</span>
+                <span className="block text-xs text-muted-foreground">Demo team · 2 official accounts</span>
               </span>
               {busy === "barca" ? <Loader2 className="size-4 animate-spin" /> : <ArrowRight className="size-4 text-muted-foreground" />}
             </button>

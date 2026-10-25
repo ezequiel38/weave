@@ -1,6 +1,6 @@
 # Weave — every post, one story
 
-Weave aggregates a team's / brand's posts from Instagram, TikTok, YouTube and X and
+Weave aggregates a team's / brand's posts from Instagram and TikTok and
 merges posts about the same moment into a single story — without losing any
 original photo, video, link or fact. Built at Cal Hacks 13.0.
 
@@ -57,8 +57,7 @@ Splitting a post records a `decidedBy: "user"` decision so it is never re-merged
   Elastic stage (`convex/lib/elastic.ts`, needs `ELASTIC_URL` + `ELASTIC_API_KEY`): posts are indexed
   once with `semantic_text`; ambiguous pairs that are not semantic neighbours are settled as
   "related" without Claude, and top neighbours the rules missed become new Claude candidates.
-- YouTube and X are not covered by the Actor yet; those accounts are skipped
-  with a warning in the run log.
+- Only Instagram and TikTok are supported (the Actor covers those two).
 - Platform CDN media URLs expire, so the analysis step copies every image, video poster and
   poster-less video (≤25 MB) into Convex file storage; feed queries serve those copies.
 - No auth: anyone with the URL can edit accounts (hackathon scope).

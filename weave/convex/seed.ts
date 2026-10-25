@@ -185,9 +185,7 @@ async function ensureBarca(ctx: MutationCtx): Promise<Id<"teams">> {
   });
   const handles: [Platform, string][] = [
     ["instagram", "fcbarcelona"],
-    ["youtube", "fcbarcelona"],
     ["tiktok", "fcbarcelona"],
-    ["x", "FCBarcelona"],
   ];
   for (const [platform, handle] of handles) {
     await ctx.db.insert("accounts", {

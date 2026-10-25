@@ -11,8 +11,25 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Logo } from "./logo";
 import { RunStatus } from "./run-status";
 import { RefreshButton } from "./refresh-button";
+import { ThemeToggle } from "./theme-toggle";
 
-export function TeamMonogram({ team, className }: { team: Pick<Doc<"teams">, "monogram" | "accentColor">; className?: string }) {
+export function TeamMonogram({
+  team,
+  className,
+}: {
+  team: Pick<Doc<"teams">, "monogram" | "accentColor"> & { logoUrl?: string | null };
+  className?: string;
+}) {
+  if (team.logoUrl) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element -- small stored logo
+      <img
+        src={team.logoUrl}
+        alt=""
+        className={cn("inline-flex size-10 shrink-0 rounded-xl bg-white object-cover ring-1 ring-foreground/10", className)}
+      />
+    );
+  }
   return (
     <span
       className={cn("inline-flex size-10 shrink-0 items-center justify-center rounded-xl text-xs font-semibold tracking-wide text-white", className)}
@@ -60,7 +77,8 @@ export function TeamShell({ slug, children }: { slug: string; children: (team: D
               </Link>
             ))}
           </nav>
-          {team && <RefreshButton teamId={team._id} className="ml-auto sm:ml-0" />}
+          <ThemeToggle className="ml-auto sm:ml-0" />
+          {team && <RefreshButton teamId={team._id} />}
         </div>
         <nav className="flex gap-1 border-t px-4 py-1.5 sm:hidden">
           {nav.map((n) => (

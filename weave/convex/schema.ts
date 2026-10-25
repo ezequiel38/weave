@@ -34,6 +34,8 @@ export default defineSchema({
     accentColor: v.string(),
     monogram: v.string(),
     keywords: v.array(v.string()),
+    /** Real crest / logo copied into file storage (platform avatar URLs expire). */
+    logoStorageId: v.optional(v.id("_storage")),
   }).index("by_slug", ["slug"]),
 
   accounts: defineTable({
