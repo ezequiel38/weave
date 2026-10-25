@@ -7,6 +7,7 @@ import { action, internalAction, type ActionCtx } from "./_generated/server";
 import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import { normalizeActorPost, type NormalizedPost } from "./lib/normalize";
+import { isUnlocked } from "./lib/lock";
 
 /** Our Actor (actors/fcb-social-posts): wraps the IG + TikTok store scrapers. */
 const ACTOR_ID = process.env.APIFY_ACTOR_ID ?? "ezeq8/fcb-social-posts";
@@ -20,10 +21,7 @@ const MAX_POLLS = 50; // ~12.5 minutes
 const SUPPORTED = new Set(["instagram", "tiktok"]);
 
 /** Spending actions are locked behind REFRESH_PASSWORD (set in the Convex env, never in code). */
-function unlocked(password: string | undefined): boolean {
-  const expected = process.env.REFRESH_PASSWORD;
-  return !expected || password === expected;
-}
+const unlocked = isUnlocked;
 const LOCKED = { ok: false, locked: true, message: "Wrong password" };
 const result = v.object({ ok: v.boolean(), message: v.string(), locked: v.optional(v.boolean()) });
 

@@ -2,6 +2,7 @@ import { ConvexError, v } from "convex/values";
 import { internalMutation, mutation, query } from "./_generated/server";
 import { platform } from "./schema";
 import { parseAccountInput, profileUrl } from "./lib/accountUrl";
+import { assertUnlocked } from "./lib/lock";
 
 export const listForTeam = query({
   args: { teamId: v.id("teams") },
@@ -19,8 +20,10 @@ export const add = mutation({
     teamId: v.id("teams"),
     input: v.string(),
     platform: v.optional(platform),
+    password: v.optional(v.string()),
   },
-  handler: async (ctx, { teamId, input, platform }) => {
+  handler: async (ctx, { teamId, input, platform, password }) => {
+    assertUnlocked(password);
     const parsed = parseAccountInput(input, platform);
     if (!parsed) {
       throw new ConvexError(
@@ -65,15 +68,18 @@ export const setStatus = mutation({
       v.literal("approved"),
       v.literal("excluded"),
     ),
+    password: v.optional(v.string()),
   },
-  handler: async (ctx, { accountId, status }) => {
+  handler: async (ctx, { accountId, status, password }) => {
+    assertUnlocked(password);
     await ctx.db.patch(accountId, { status });
   },
 });
 
 export const remove = mutation({
-  args: { accountId: v.id("accounts") },
-  handler: async (ctx, { accountId }) => {
+  args: { accountId: v.id("accounts"), password: v.optional(v.string()) },
+  handler: async (ctx, { accountId, password }) => {
+    assertUnlocked(password);
     // Posts keep their data; they just lose the account link.
     const posts = await ctx.db
       .query("posts")

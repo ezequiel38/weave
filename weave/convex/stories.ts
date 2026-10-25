@@ -1,6 +1,7 @@
 import { ConvexError, v } from "convex/values";
 import { mutation, type MutationCtx } from "./_generated/server";
 import type { Id } from "./_generated/dataModel";
+import { assertUnlocked } from "./lib/lock";
 
 /** Recompute denormalised fields (platforms, counts, dates, cover) from members. */
 export async function refreshStory(ctx: MutationCtx, storyId: Id<"stories">) {
@@ -42,8 +43,9 @@ export async function refreshStory(ctx: MutationCtx, storyId: Id<"stories">) {
 
 /** Undo a merge: move one post out of a story into its own single-post story. */
 export const splitPost = mutation({
-  args: { storyId: v.id("stories"), postId: v.id("posts") },
-  handler: async (ctx, { storyId, postId }) => {
+  args: { storyId: v.id("stories"), postId: v.id("posts"), password: v.optional(v.string()) },
+  handler: async (ctx, { storyId, postId, password }) => {
+    assertUnlocked(password);
     const story = await ctx.db.get(storyId);
     const post = await ctx.db.get(postId);
     if (!story || !post) throw new ConvexError("Story or post not found");

@@ -38,7 +38,7 @@ export default function Home() {
             <span className="size-1.5 rounded-full bg-emerald-500" /> One feed, no repeats
           </p>
           <h1 className="mt-5 font-display text-6xl leading-[0.95] tracking-tight text-balance sm:text-7xl">
-            Four posts.
+            Many posts.
             <br />
             <em className="text-foreground/70">One story.</em>
           </h1>

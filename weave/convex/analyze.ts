@@ -25,6 +25,9 @@ const MODEL = process.env.CLAUDE_MODEL ?? "claude-opus-5-5";
 /** Spend guards per run. */
 const MAX_PAIRS_PER_RUN = 24;
 const MAX_SUMMARIES_PER_RUN = 8;
+/** Bandwidth guards per run: file bandwidth is metered, so bound what one analysis can download and store. */
+const MAX_COPY_BYTES = 10_000_000;
+const MAX_MEDIA_PER_RUN = 40;
 
 type RunUpdate = { message: string; level?: "info" | "warn" | "error"; claudeCalls?: number };
 
@@ -51,6 +54,11 @@ async function download(url: string): Promise<{ buf: Buffer; type: string }> {
     signal: AbortSignal.timeout(10_000),
   });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  // Refuse before reading the body, so an oversized clip never gets downloaded or re-uploaded.
+  if (Number(res.headers.get("content-length") ?? 0) > MAX_COPY_BYTES) {
+    await res.body?.cancel();
+    throw new Error("too large to copy");
+  }
   return { buf: Buffer.from(await res.arrayBuffer()), type: res.headers.get("content-type") ?? "image/jpeg" };
 }
 
@@ -68,7 +76,8 @@ async function dHash(buf: Buffer): Promise<string> {
 }
 
 async function hashTeamMedia(ctx: ActionCtx, teamId: Id<"teams">): Promise<{ ok: number; failed: number }> {
-  const todo = await ctx.runQuery(internal.pipeline.mediaToHash, { teamId });
+  // Anything beyond the cap is picked up by the next run.
+  const todo = (await ctx.runQuery(internal.pipeline.mediaToHash, { teamId })).slice(0, MAX_MEDIA_PER_RUN);
   const results: { id: Id<"media">; phash?: string; hashError?: string; storageId?: Id<"_storage"> }[] = [];
   for (let i = 0; i < todo.length; i += 6) {
     const batch = await Promise.all(
@@ -76,7 +85,7 @@ async function hashTeamMedia(ctx: ActionCtx, teamId: Id<"teams">): Promise<{ ok:
         try {
           // One download serves both the hash and the durable copy (CDN URLs expire in days).
           const { buf, type } = await download(m.url);
-          if (buf.length > 25_000_000) return { id: m._id, hashError: "too large to copy" };
+          if (buf.length > MAX_COPY_BYTES) return { id: m._id, hashError: "too large to copy" };
           const storageId = await ctx.storage.store(new Blob([new Uint8Array(buf)], { type }));
           return { id: m._id, phash: m.video ? undefined : await dHash(buf), storageId };
         } catch (e) {

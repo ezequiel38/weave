@@ -16,6 +16,7 @@ import type * as ingest from "../ingest.js";
 import type * as ingestDb from "../ingestDb.js";
 import type * as lib_accountUrl from "../lib/accountUrl.js";
 import type * as lib_elastic from "../lib/elastic.js";
+import type * as lib_lock from "../lib/lock.js";
 import type * as lib_match from "../lib/match.js";
 import type * as lib_normalize from "../lib/normalize.js";
 import type * as pipeline from "../pipeline.js";
@@ -39,6 +40,7 @@ declare const fullApi: ApiFromModules<{
   ingestDb: typeof ingestDb;
   "lib/accountUrl": typeof lib_accountUrl;
   "lib/elastic": typeof lib_elastic;
+  "lib/lock": typeof lib_lock;
   "lib/match": typeof lib_match;
   "lib/normalize": typeof lib_normalize;
   pipeline: typeof pipeline;

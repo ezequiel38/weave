@@ -13,6 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { StoryCard } from "./story-card";
 import { PostCard } from "./post-card";
 import { PlatformStack, type Platform } from "./platform";
+import { lockable, usePasswordGate } from "./password-gate";
 
 type Mode = "unified" | "raw";
 type Layout = "grid" | "list";
@@ -54,6 +55,7 @@ function FeedSkeleton() {
 function EmptyFeed({ team }: { team: Doc<"teams"> }) {
   const load = useMutation(api.seed.loadSampleData);
   const [busy, setBusy] = useState(false);
+  const gate = usePasswordGate("Loading sample data");
   return (
     <div className="rounded-3xl border border-dashed bg-card/60 px-6 py-16 text-center">
       <p className="font-display text-3xl">No posts yet</p>
@@ -67,20 +69,24 @@ function EmptyFeed({ team }: { team: Doc<"teams"> }) {
         </Button>
         <Button
           disabled={busy}
-          onClick={async () => {
-            setBusy(true);
-            try {
-              await load({ teamId: team._id });
-            } catch (e) {
-              toast.error(e instanceof Error ? e.message : "Couldn't load samples");
-            } finally {
-              setBusy(false);
-            }
-          }}
+          onClick={() =>
+            gate.run(async (password) => {
+              setBusy(true);
+              try {
+                return await lockable(() => load({ teamId: team._id, password }));
+              } catch (e) {
+                toast.error(e instanceof Error ? e.message : "Couldn't load samples");
+                return {};
+              } finally {
+                setBusy(false);
+              }
+            })
+          }
         >
           <Sparkles /> Load sample data
         </Button>
       </div>
+      {gate.dialog}
     </div>
   );
 }
@@ -90,9 +96,11 @@ export function FeedView({ team }: { team: Doc<"teams"> }) {
   const layout = useSyncExternalStore(subscribeLayout, readLayout, () => "grid" as const);
   const grid = layout === "grid";
   const stories = useQuery(api.feed.unified, { teamId: team._id });
-  const posts = useQuery(api.feed.raw, { teamId: team._id });
+  // The raw list only drives the platform stack and empty check in the unified view, so keep it small there.
+  const posts = useQuery(api.feed.raw, { teamId: team._id, limit: mode === "unified" ? 20 : undefined });
   const stats = useQuery(api.feed.stats, { teamId: team._id });
   const clearSamples = useMutation(api.seed.clearSampleData);
+  const clearGate = usePasswordGate("Removing samples");
 
   const platforms = [...new Set((posts ?? []).map((p) => p.platform))] as Platform[];
   const loading = stories === undefined || posts === undefined;
@@ -169,10 +177,11 @@ export function FeedView({ team }: { team: Doc<"teams"> }) {
           </span>
           <button
             className="ml-auto inline-flex items-center gap-1 text-xs font-medium underline-offset-4 hover:underline"
-            onClick={() => clearSamples({ teamId: team._id })}
+            onClick={() => clearGate.run((password) => lockable(() => clearSamples({ teamId: team._id, password })))}
           >
             <Trash2 className="size-3" /> Remove samples
           </button>
+          {clearGate.dialog}
         </div>
       )}
 

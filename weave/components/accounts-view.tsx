@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { PLATFORMS, PlatformBadge, PlatformGlyph, type Platform } from "./platform";
-import { usePasswordGate } from "./password-gate";
+import { lockable, usePasswordGate } from "./password-gate";
 import { RefreshButton } from "./refresh-button";
 
 /** Platforms the ingestion Actor actually covers. */
@@ -29,6 +29,7 @@ const VERIFY = {
 function AccountRow({ account }: { account: Doc<"accounts"> }) {
   const setStatus = useMutation(api.accounts.setStatus);
   const remove = useMutation(api.accounts.remove);
+  const gate = usePasswordGate("Editing accounts");
   const v = VERIFY[account.verification.level];
   const included = account.status === "approved";
 
@@ -60,20 +61,28 @@ function AccountRow({ account }: { account: Doc<"accounts"> }) {
         <span className="hidden sm:inline">{included ? "Included" : "Excluded"}</span>
         <Switch
           checked={included}
-          onCheckedChange={(on) => setStatus({ accountId: account._id, status: on ? "approved" : "excluded" })}
+          onCheckedChange={(on) =>
+            gate.run((password) =>
+              lockable(() => setStatus({ accountId: account._id, status: on ? "approved" : "excluded", password })),
+            )
+          }
         />
       </label>
       <Button
         variant="ghost"
         size="icon-sm"
         aria-label="Remove account"
-        onClick={async () => {
-          await remove({ accountId: account._id });
-          toast.success(`Removed @${account.handle}`);
-        }}
+        onClick={() =>
+          gate.run(async (password) => {
+            const res = await lockable(() => remove({ accountId: account._id, password }));
+            if (!res.locked) toast.success(`Removed @${account.handle}`);
+            return res;
+          })
+        }
       >
         <Trash2 />
       </Button>
+      {gate.dialog}
     </li>
   );
 }
@@ -83,24 +92,32 @@ function AddAccount({ team }: { team: Doc<"teams"> }) {
   const [platform, setPlatform] = useState<Platform>("instagram");
   const [value, setValue] = useState("");
   const [busy, setBusy] = useState(false);
+  const gate = usePasswordGate("Adding accounts");
 
   return (
+    <>
     <form
       className="flex flex-col gap-3"
-      onSubmit={async (e) => {
+      onSubmit={(e) => {
         e.preventDefault();
         if (!value.trim()) return;
-        setBusy(true);
-        try {
-          await add({ teamId: team._id, input: value, platform });
-          setValue("");
-          toast.success("Account added");
-        } catch (err) {
-          const msg = err instanceof Error ? err.message.replace(/^.*ConvexError: /, "").split("\n")[0] : "Couldn't add account";
-          toast.error(msg);
-        } finally {
-          setBusy(false);
-        }
+        gate.run(async (password) => {
+          setBusy(true);
+          try {
+            const res = await lockable(() => add({ teamId: team._id, input: value, platform, password }));
+            if (!res.locked) {
+              setValue("");
+              toast.success("Account added");
+            }
+            return res;
+          } catch (err) {
+            const msg = err instanceof Error ? err.message.replace(/^.*ConvexError: /, "").split("\n")[0] : "Couldn't add account";
+            toast.error(msg);
+            return {};
+          } finally {
+            setBusy(false);
+          }
+        });
       }}
     >
       <div className="flex gap-1.5">
@@ -133,6 +150,8 @@ function AddAccount({ team }: { team: Doc<"teams"> }) {
         Profile URLs are detected automatically. Manually added accounts are marked unverified.
       </p>
     </form>
+    {gate.dialog}
+    </>
   );
 }
 

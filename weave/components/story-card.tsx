@@ -20,6 +20,7 @@ import { MediaTile } from "./media-tile";
 import { MediaLightbox, type LightboxItem } from "./media-lightbox";
 import { PLATFORMS, PlatformBadge, PlatformGlyph, PlatformStack } from "./platform";
 import { MergeEvidence } from "./merge-evidence";
+import { lockable, usePasswordGate } from "./password-gate";
 import type { StoryPost, UnifiedStory } from "./feed-types";
 
 const ROLE_LABEL: Record<StoryPost["role"], string> = {
@@ -104,6 +105,7 @@ function SourcePost({
 }) {
   const split = useMutation(api.stories.splitPost);
   const [busy, setBusy] = useState(false);
+  const gate = usePasswordGate("Splitting stories");
   const p = PLATFORMS[post.platform];
   const metric = compact(post.metrics.views) ?? compact(post.metrics.likes);
 
@@ -161,21 +163,26 @@ function SourcePost({
               variant="ghost"
               size="xs"
               disabled={busy}
-              onClick={async () => {
-                setBusy(true);
-                try {
-                  await split({ storyId, postId: post._id });
-                  toast.success("Post split into its own story");
-                } catch (e) {
-                  toast.error(e instanceof Error ? e.message : "Couldn't split post");
-                } finally {
-                  setBusy(false);
-                }
-              }}
+              onClick={() =>
+                gate.run(async (password) => {
+                  setBusy(true);
+                  try {
+                    const res = await lockable(() => split({ storyId, postId: post._id, password }));
+                    if (!res.locked) toast.success("Post split into its own story");
+                    return res;
+                  } catch (e) {
+                    toast.error(e instanceof Error ? e.message : "Couldn't split post");
+                    return {};
+                  } finally {
+                    setBusy(false);
+                  }
+                })
+              }
             >
               <Scissors /> Not the same story
             </Button>
           )}
+          {gate.dialog}
         </div>
       </div>
     </li>

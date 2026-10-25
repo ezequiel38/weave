@@ -99,11 +99,11 @@ export const stats = query({
     const posts = await ctx.db
       .query("posts")
       .withIndex("by_team_posted", (q) => q.eq("teamId", teamId))
-      .take(1000);
+      .take(500);
     const stories = await ctx.db
       .query("stories")
       .withIndex("by_team_last", (q) => q.eq("teamId", teamId))
-      .take(1000);
+      .take(500);
     return {
       posts: posts.length,
       stories: stories.length,
@@ -119,7 +119,7 @@ export const stats = query({
 export const showcase = query({
   args: {},
   handler: async (ctx) => {
-    const stories = (await ctx.db.query("stories").order("desc").take(200)).filter(
+    const stories = (await ctx.db.query("stories").order("desc").take(50)).filter(
       (s) => s.origin === "live" && s.postCount > 1 && s.mediaCount > 0,
     );
     stories.sort(

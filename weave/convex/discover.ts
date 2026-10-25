@@ -5,6 +5,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { betaZodOutputFormat } from "@anthropic-ai/sdk/helpers/beta/zod";
 import { z } from "zod";
 import { action } from "./_generated/server";
+import { isUnlocked } from "./lib/lock";
 import { internal } from "./_generated/api";
 
 /**
@@ -34,8 +35,7 @@ export const suggest = action({
   args: { teamId: v.id("teams"), password: v.optional(v.string()) },
   returns: v.object({ ok: v.boolean(), message: v.string(), locked: v.optional(v.boolean()) }),
   handler: async (ctx, { teamId, password }): Promise<{ ok: boolean; message: string; locked?: boolean }> => {
-    const expected = process.env.REFRESH_PASSWORD;
-    if (expected && password !== expected) return { ok: false, locked: true, message: "Wrong password" };
+    if (!isUnlocked(password)) return { ok: false, locked: true, message: "Wrong password" };
     if (!process.env.ANTHROPIC_API_KEY) return { ok: false, message: "ANTHROPIC_API_KEY isn't set on the deployment." };
 
     const team = await ctx.runQuery(internal.teams.forDiscovery, { teamId });

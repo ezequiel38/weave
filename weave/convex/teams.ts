@@ -3,6 +3,7 @@ import { internalAction, internalMutation, internalQuery, mutation, query, type 
 import { internal } from "./_generated/api";
 import type { Doc } from "./_generated/dataModel";
 
+const MAX_TEAMS = 25;
 const PALETTE = ["#4f46e5", "#0f766e", "#b45309", "#be123c", "#1d4ed8", "#7c3aed", "#15803d"];
 
 /** "golden state warriors" → "Golden State Warriors"; leaves mixed-case input ("FC Barcelona") alone. */
@@ -48,6 +49,10 @@ export const create = mutation({
       .withIndex("by_slug", (q) => q.eq("slug", slug))
       .unique();
     if (existing) return existing.slug;
+    // Open to visitors, so cap it: nobody can fill the deployment with junk teams.
+    if ((await ctx.db.query("teams").take(MAX_TEAMS + 1)).length > MAX_TEAMS) {
+      throw new ConvexError("Team limit reached for this demo");
+    }
     const words = clean.split(/\s+/).filter(Boolean);
     await ctx.db.insert("teams", {
       name: clean,

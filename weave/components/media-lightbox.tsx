@@ -47,7 +47,7 @@ function Stage({ media, height }: { media: MediaLike; height: string }) {
   }
   return (
     // eslint-disable-next-line @next/next/no-img-element -- remote CDN media of unknown dimensions
-    <img src={imageSrc(media.url)} alt="" className="max-h-full max-w-full rounded-lg object-contain" />
+    <img src={imageSrc(media.url, 1600)} alt="" className="max-h-full max-w-full rounded-lg object-contain" />
   );
 }
 

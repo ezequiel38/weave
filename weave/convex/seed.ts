@@ -3,6 +3,7 @@ import { internalMutation, mutation, type MutationCtx } from "./_generated/serve
 import type { Id } from "./_generated/dataModel";
 import { profileUrl, type Platform } from "./lib/accountUrl";
 import { refreshStory } from "./stories";
+import { assertUnlocked } from "./lib/lock";
 
 /**
  * DEMO FIXTURES — everything inserted here has origin: "sample" and is shown
@@ -215,8 +216,9 @@ export const ensureDemoTeam = mutation({
 
 /** Insert the labelled sample posts + pre-grouped sample stories. Idempotent. */
 export const loadSampleData = mutation({
-  args: { teamId: v.id("teams") },
-  handler: async (ctx, { teamId }) => {
+  args: { teamId: v.id("teams"), password: v.optional(v.string()) },
+  handler: async (ctx, { teamId, password }) => {
+    assertUnlocked(password);
     const now = Date.now();
     const ids = new Map<string, Id<"posts">>();
     for (const p of POSTS) {
@@ -333,8 +335,9 @@ export const loadSampleData = mutation({
 
 /** Remove every sample row for a team (posts, media, stories, links, decisions). */
 export const clearSampleData = mutation({
-  args: { teamId: v.id("teams") },
-  handler: async (ctx, { teamId }) => {
+  args: { teamId: v.id("teams"), password: v.optional(v.string()) },
+  handler: async (ctx, { teamId, password }) => {
+    assertUnlocked(password);
     const posts = await ctx.db
       .query("posts")
       .withIndex("by_team_posted", (q) => q.eq("teamId", teamId))

@@ -14,9 +14,11 @@ export interface MediaLike {
 }
 
 /** Proxy remote images through our route so platform CDNs that block hotlinking still render. */
-export function imageSrc(url: string): string {
+export function imageSrc(url: string, width = 640): string {
   if (url.startsWith("sample:") || url.startsWith("/") || url.startsWith("data:")) return url;
-  if (/^https:\/\/[^/]+\.convex\.(cloud|site)\//.test(url)) return url; // our own durable copies
+  // Our own durable copies: resized + cached through the proxy so views don't re-download the originals.
+  if (/^https:\/\/[^/]+\.convex\.cloud\/api\/storage\//.test(url)) return `/api/img?u=${encodeURIComponent(url)}&w=${width}`;
+  if (/^https:\/\/[^/]+\.convex\.(cloud|site)\//.test(url)) return url;
   return `/api/img?u=${encodeURIComponent(url)}`;
 }
 

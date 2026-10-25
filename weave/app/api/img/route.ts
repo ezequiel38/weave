@@ -1,4 +1,5 @@
 import type { NextRequest } from "next/server";
+import sharp from "sharp";
 
 // Social CDNs often refuse hotlinked images (referrer / CORP checks). This
 // proxies only known platform media hosts — it is not an open proxy.
@@ -25,7 +26,10 @@ export async function GET(req: NextRequest) {
   } catch {
     return new Response("bad url", { status: 400 });
   }
-  if (url.protocol !== "https:" || !ALLOWED.some((re) => re.test(url.hostname))) {
+  // Our own durable copies live in Convex file storage; serving them through here lets the CDN/browser cache
+  // a resized copy instead of every page view downloading the full original (file bandwidth is metered).
+  const ownStorage = /\.convex\.cloud$/.test(url.hostname) && url.pathname.startsWith("/api/storage/");
+  if (url.protocol !== "https:" || !(ownStorage || ALLOWED.some((re) => re.test(url.hostname)))) {
     return new Response("host not allowed", { status: 403 });
   }
   const upstream = await fetch(url, {
@@ -37,6 +41,21 @@ export async function GET(req: NextRequest) {
   }
   const type = upstream.headers.get("content-type") ?? "";
   if (!type.startsWith("image/")) return new Response("not an image", { status: 415 });
+  const width = Math.min(Number(req.nextUrl.searchParams.get("w")) || 0, 2000);
+  if (ownStorage && width > 0 && !/gif|svg/.test(type)) {
+    const resized = await sharp(Buffer.from(await upstream.arrayBuffer()))
+      .rotate()
+      .resize({ width, withoutEnlargement: true })
+      .webp({ quality: 78 })
+      .toBuffer()
+      .catch(() => null);
+    if (resized) {
+      return new Response(new Uint8Array(resized), {
+        headers: { "content-type": "image/webp", "cache-control": "public, max-age=86400, s-maxage=604800, immutable" },
+      });
+    }
+    return new Response("resize failed", { status: 502 });
+  }
   return new Response(upstream.body, {
     headers: {
       "content-type": type,

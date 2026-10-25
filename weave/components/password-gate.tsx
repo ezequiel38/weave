@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { Lock } from "lucide-react";
+import { ConvexError } from "convex/values";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -9,6 +10,17 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 const KEY = "weave.refreshPassword";
 
 type Attempt = (password: string | undefined) => Promise<{ locked?: boolean } | object>;
+
+/** For locked mutations, which throw `ConvexError({ locked: true })`: map that onto the gate's `{ locked }` result. */
+export async function lockable(fn: () => Promise<unknown>): Promise<{ locked?: boolean }> {
+  try {
+    await fn();
+    return {};
+  } catch (e) {
+    if (e instanceof ConvexError && (e.data as { locked?: boolean } | undefined)?.locked) return { locked: true };
+    throw e;
+  }
+}
 
 /**
  * Shared lock for actions that spend credits (checked server-side against
