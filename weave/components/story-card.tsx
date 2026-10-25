@@ -11,6 +11,7 @@ import {
   TriangleAlert,
 } from "lucide-react";
 import { api } from "@/convex/_generated/api";
+import { hamming } from "@/convex/lib/match";
 import { cn } from "@/lib/utils";
 import { compact, splitTrailingHashtags, timeAgo } from "@/lib/format";
 import { Caption } from "./caption";
@@ -47,8 +48,18 @@ function storyMedia(story: UnifiedStory): { all: Tile[]; visible: number } {
   const hiddenDupes = story.posts
     .filter((p) => !shownPosts.includes(p))
     .flatMap((p) => p.media.map((m) => ({ m, p })));
-  const visible = [...perPost, ...extras];
-  return { all: [...visible, ...hiddenDupes], visible: visible.length };
+  // The same photo/clip cross-posted shows up as separate media rows: keep one tile per look-alike.
+  const kept: Tile[] = [];
+  const isRepeat = (t: Tile) =>
+    kept.some(
+      (k) =>
+        k.p !== t.p &&
+        ((k.m.phash && t.m.phash && hamming(k.m.phash, t.m.phash) <= 6) ||
+          (k.m.kind === "video" && t.m.kind === "video" && !!k.m.durationSec && !!t.m.durationSec && Math.abs(k.m.durationSec - t.m.durationSec) <= 1)),
+    );
+  const uniq = (tiles: Tile[]) => tiles.filter((t) => (isRepeat(t) ? false : (kept.push(t), true)));
+  const visible = uniq([...perPost, ...extras]);
+  return { all: [...visible, ...uniq(hiddenDupes)], visible: visible.length };
 }
 
 function Mosaic({ story, tiles, onOpen }: { story: UnifiedStory; tiles: Tile[]; onOpen: (i: number) => void }) {
