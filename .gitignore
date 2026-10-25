@@ -1,0 +1,10 @@
+# Local dev tooling, screenshots and data dumps
+.tools/
+
+# Dependencies, builds, env files
+node_modules/
+dist/
+.env*
+!.env.example
+*.log
+.DS_Store

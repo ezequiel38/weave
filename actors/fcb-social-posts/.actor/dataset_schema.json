@@ -1,0 +1,25 @@
+{
+    "actorSpecification": 1,
+    "views": {
+        "overview": {
+            "title": "Overview",
+            "transformation": {
+                "fields": ["platform", "source", "postedAt", "type", "caption", "audioName", "likes", "views", "postUrl"]
+            },
+            "display": {
+                "component": "table",
+                "properties": {
+                    "platform": { "label": "Platform", "format": "text" },
+                    "source": { "label": "Account", "format": "text" },
+                    "postedAt": { "label": "Posted", "format": "date" },
+                    "type": { "label": "Type", "format": "text" },
+                    "caption": { "label": "Caption", "format": "text" },
+                    "audioName": { "label": "Audio", "format": "text" },
+                    "likes": { "label": "Likes", "format": "number" },
+                    "views": { "label": "Views", "format": "number" },
+                    "postUrl": { "label": "Link", "format": "link" }
+                }
+            }
+        }
+    }
+}

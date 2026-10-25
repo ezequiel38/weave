@@ -1,0 +1,39 @@
+{
+    "$schema": "https://apify.com/schemas/v1/input.ide.json",
+    "title": "FC Barcelona recent social posts",
+    "type": "object",
+    "schemaVersion": 1,
+    "properties": {
+        "instagramUsernames": {
+            "title": "Instagram usernames",
+            "type": "array",
+            "description": "Instagram profiles to scrape.",
+            "editor": "stringList",
+            "prefill": ["fcbarcelona"],
+            "default": ["fcbarcelona"]
+        },
+        "tiktokProfiles": {
+            "title": "TikTok usernames",
+            "type": "array",
+            "description": "TikTok profiles to scrape.",
+            "editor": "stringList",
+            "prefill": ["fcbarcelona"],
+            "default": ["fcbarcelona"]
+        },
+        "resultsPerSource": {
+            "title": "Posts per profile",
+            "type": "integer",
+            "description": "Maximum recent posts to fetch per profile on each platform.",
+            "default": 10,
+            "prefill": 10
+        },
+        "newerThan": {
+            "title": "Only posts newer than",
+            "type": "string",
+            "description": "Relative window such as '7 days' or an absolute date like 2026-10-01.",
+            "default": "7 days",
+            "prefill": "7 days",
+            "editor": "textfield"
+        }
+    }
+}
