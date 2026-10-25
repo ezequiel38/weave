@@ -140,6 +140,8 @@ export const matchingInput = internalQuery({
         hashtags: p.hashtags,
         postedAt: p.postedAt,
         hashes: media.flatMap((m) => (m.phash ? [m.phash] : [])),
+        // Hashable media still waiting on a hash: any "not a match" verdict now would be premature.
+        unhashed: media.some((m) => !m.phash && !m.hashError && m.kind !== "audio" && (m.kind === "image" || !!m.thumbnailUrl)),
         videoSecs: media.flatMap((m) => (m.kind === "video" && m.durationSec ? [m.durationSec] : [])),
       });
     }

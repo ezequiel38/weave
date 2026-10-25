@@ -221,7 +221,15 @@ async function analyse(ctx: ActionCtx, teamId: Id<"teams">, runId?: Id<"runs">) 
   const created = await ctx.runMutation(internal.pipeline.assignSingles, { teamId });
   if (created) await log(ctx, runId, { message: `Created ${created} story card(s)` });
 
-  const hashed = await hashTeamMedia(ctx, teamId);
+  // The per-round cap bounds bandwidth, but matching before hashes exist caches wrong "not a match" verdicts,
+  // so keep going (a few rounds) until the backlog is hashed.
+  const hashed = { ok: 0, failed: 0 };
+  for (let round = 0; round < 4; round++) {
+    const r = await hashTeamMedia(ctx, teamId);
+    hashed.ok += r.ok;
+    hashed.failed += r.failed;
+    if (r.ok + r.failed < MAX_MEDIA_PER_RUN) break;
+  }
   if (hashed.ok + hashed.failed) {
     await log(ctx, runId, { message: `Saved ${hashed.ok} media file(s)${hashed.failed ? `, ${hashed.failed} unreachable` : ""}` });
   }
@@ -340,7 +348,11 @@ async function analyse(ctx: ActionCtx, teamId: Id<"teams">, runId?: Id<"runs">) 
   }
 
   // Persist merges plus every Elastic/Claude verdict so those pairs are never re-checked.
-  const worthKeeping = fresh.filter((d) => d.merged || d.decidedBy !== "rule");
+  // A "not merged" verdict on a post whose images aren't hashed yet is provisional: don't cache it.
+  const unhashed = new Set(posts.filter((p) => p.unhashed).map((p) => p._id as string));
+  const worthKeeping = fresh.filter(
+    (d) => d.merged || (d.decidedBy !== "rule" && !unhashed.has(d.postA) && !unhashed.has(d.postB)),
+  );
   for (let i = 0; i < worthKeeping.length; i += 50) {
     await ctx.runMutation(internal.pipeline.recordDecisions, { teamId, decisions: worthKeeping.slice(i, i + 50) });
   }
