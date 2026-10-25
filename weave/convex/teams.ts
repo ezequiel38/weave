@@ -1,5 +1,5 @@
 import { ConvexError, v } from "convex/values";
-import { internalAction, internalMutation, mutation, query, type QueryCtx } from "./_generated/server";
+import { internalAction, internalMutation, internalQuery, mutation, query, type QueryCtx } from "./_generated/server";
 import { internal } from "./_generated/api";
 import type { Doc } from "./_generated/dataModel";
 
@@ -96,5 +96,43 @@ export const attachLogo = internalMutation({
     if (team.logoStorageId) await ctx.storage.delete(team.logoStorageId);
     await ctx.db.patch(team._id, { logoStorageId: storageId });
     return null;
+  },
+});
+
+export const hasLogo = internalQuery({
+  args: { teamId: v.id("teams") },
+  returns: v.boolean(),
+  handler: async (ctx, { teamId }) => !!(await ctx.db.get(teamId))?.logoStorageId,
+});
+
+/** Ingest hook: store the account avatar as the logo if the team doesn't have one yet. */
+export const setLogoIfMissing = internalAction({
+  args: { teamId: v.id("teams"), url: v.string() },
+  returns: v.boolean(),
+  handler: async (ctx, { teamId, url }) => {
+    if (await ctx.runQuery(internal.teams.hasLogo, { teamId })) return false;
+    const res = await fetch(url, { signal: AbortSignal.timeout(10_000) });
+    const type = res.headers.get("content-type") ?? "";
+    if (!res.ok || !type.startsWith("image/")) throw new Error(`${res.status} ${type}`);
+    const storageId = await ctx.storage.store(await res.blob());
+    const team = await ctx.runQuery(internal.teams.slugOf, { teamId });
+    if (!team) return false;
+    await ctx.runMutation(internal.teams.attachLogo, { slug: team, storageId });
+    return true;
+  },
+});
+
+export const slugOf = internalQuery({
+  args: { teamId: v.id("teams") },
+  returns: v.union(v.string(), v.null()),
+  handler: async (ctx, { teamId }) => (await ctx.db.get(teamId))?.slug ?? null,
+});
+
+export const forDiscovery = internalQuery({
+  args: { teamId: v.id("teams") },
+  returns: v.union(v.object({ name: v.string(), kind: v.string(), website: v.optional(v.string()) }), v.null()),
+  handler: async (ctx, { teamId }) => {
+    const t = await ctx.db.get(teamId);
+    return t ? { name: t.name, kind: t.kind, website: t.website } : null;
   },
 });

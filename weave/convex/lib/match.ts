@@ -28,8 +28,25 @@ export type RuleVerdict =
   | { kind: "ambiguous" }
   | { kind: "skip" };
 
-/** Hashtags and generic club tags carry no event information. */
-const GENERIC_TAGS = new Set(["fcbarcelona", "barça", "barca", "barçaontiktok", "forçabarça", "viscabarça"]);
+// Case- and accent-insensitive, so #ElClásico and #elclasico are the same tag.
+const normTag = (t: string) => t.normalize("NFKD").replace(/\p{M}/gu, "").replace(/^#+/, "").toLowerCase();
+
+/** A tag on more than this share of a team's posts is "generic" (brand, sponsor, always-on campaign). */
+export const GENERIC_TAG_SHARE = 0.35;
+/** Below this many posts, frequencies are too noisy to call anything generic. */
+const MIN_POSTS_FOR_GENERIC = 8;
+
+/**
+ * Hashtags that carry no event information for this team, learned from the
+ * team's own posts: anything used on > GENERIC_TAG_SHARE of them (e.g.
+ * #fcbarcelona, #barçaontiktok, a season-long sponsor tag). No per-team setup.
+ */
+export function genericTags(posts: { hashtags: string[] }[], share = GENERIC_TAG_SHARE): Set<string> {
+  if (posts.length < MIN_POSTS_FOR_GENERIC) return new Set();
+  const counts = new Map<string, number>();
+  for (const p of posts) for (const t of new Set(p.hashtags.map(normTag))) counts.set(t, (counts.get(t) ?? 0) + 1);
+  return new Set([...counts].filter(([, n]) => n / posts.length > share).map(([t]) => t));
+}
 
 function stripNoise(text: string): string {
   return text
@@ -81,19 +98,19 @@ export function hamming(a: string, b: string): number {
   return d;
 }
 
-export function computeSignals(a: PostSignalsInput, b: PostSignalsInput): PairSignals {
+export function computeSignals(a: PostSignalsInput, b: PostSignalsInput, generic: Set<string> = new Set()): PairSignals {
   let best: number | undefined;
   for (const ha of a.hashes) for (const hb of b.hashes) {
     const d = hamming(ha, hb);
     if (best === undefined || d < best) best = d;
   }
-  const tagsA = new Set(a.hashtags.map((t) => t.toLowerCase()).filter((t) => !GENERIC_TAGS.has(t)));
+  const tagsA = new Set(a.hashtags.map(normTag).filter((t) => !generic.has(t)));
   return {
     textSimilarity: textSimilarity(`${a.title ?? ""} ${a.text}`, `${b.title ?? ""} ${b.text}`),
     imageHashDistance: best,
     hoursApart: Math.abs(a.postedAt - b.postedAt) / 3_600_000,
     sharedLinks: a.links.filter((l) => b.links.includes(l)).length,
-    sharedHashtags: b.hashtags.filter((t) => tagsA.has(t.toLowerCase())).length,
+    sharedHashtags: new Set(b.hashtags.map(normTag).filter((t) => tagsA.has(t))).size,
   };
 }
 

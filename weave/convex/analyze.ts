@@ -8,7 +8,7 @@ import { z } from "zod";
 import { internalAction, type ActionCtx } from "./_generated/server";
 import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
-import { computeSignals, ruleVerdict, type Category, type PairSignals } from "./lib/match";
+import { computeSignals, genericTags, ruleVerdict, type Category, type PairSignals } from "./lib/match";
 import { elasticClient, indexPosts, neighbours } from "./lib/elastic";
 
 /**
@@ -218,6 +218,8 @@ async function analyse(ctx: ActionCtx, teamId: Id<"teams">, runId?: Id<"runs">) 
   }
 
   const { posts, decisions } = await ctx.runQuery(internal.pipeline.matchingInput, { teamId });
+  const generic = genericTags(posts);
+  if (generic.size) await log(ctx, runId, { message: `Ignoring generic hashtags: #${[...generic].join(" #")}` });
   const known = new Map(decisions.map((d) => [d.key, d]));
 
   // Rule stage over every un-decided pair.
@@ -228,7 +230,7 @@ async function analyse(ctx: ActionCtx, teamId: Id<"teams">, runId?: Id<"runs">) 
       const a = posts[i] as MatchPost;
       const b = posts[j] as MatchPost;
       if (a.origin !== b.origin || known.has(keyOf(a._id, b._id))) continue;
-      const s = computeSignals(a, b);
+      const s = computeSignals(a, b, generic);
       const verdict = ruleVerdict(s);
       if (verdict.kind === "decided") {
         const { category, merged, confidence, reasoning } = verdict;
@@ -272,7 +274,7 @@ async function analyse(ctx: ActionCtx, teamId: Id<"teams">, runId?: Id<"runs">) 
         const a = byId.get(ida);
         const b = byId.get(idb);
         if (!a || !b || a.origin !== b.origin || hit.rank > 0 || seen.has(key) || known.has(key)) continue;
-        const s = { ...computeSignals(a, b), elasticScore: hit.score };
+        const s = { ...computeSignals(a, b, generic), elasticScore: hit.score };
         if (s.hoursApart > 48) continue;
         kept.push({ a, b, s });
         seen.add(key);

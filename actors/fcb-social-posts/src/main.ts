@@ -26,6 +26,8 @@ interface UnifiedPost {
     views: number | null;
     /** Poster frame for videos (IG displayUrl / TikTok cover). */
     thumbnailUrl: string | null;
+    /** Account profile picture — for official accounts, the team/brand logo (TikTok only). */
+    authorAvatarUrl: string | null;
 }
 
 const INSTAGRAM_ACTOR = 'apify/instagram-post-scraper';
@@ -68,6 +70,7 @@ function normalizeInstagram(item: Record<string, unknown>): UnifiedPost | null {
         comments: num(item.commentsCount),
         views: num(item.videoPlayCount) ?? num(item.videoViewCount),
         thumbnailUrl: isVideo ? displayUrl || null : null,
+        authorAvatarUrl: null, // the Instagram post scraper doesn't return profile pictures
     };
 }
 
@@ -98,6 +101,7 @@ function normalizeTikTok(item: Record<string, unknown>): UnifiedPost | null {
         comments: num(item.commentCount),
         views: num(item.playCount),
         thumbnailUrl: str(video.coverUrl) || str(video.originalCoverUrl) || null,
+        authorAvatarUrl: str(author.originalAvatarUrl) || str(author.avatar) || null,
     };
 }
 

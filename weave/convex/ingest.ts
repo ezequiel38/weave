@@ -50,6 +50,19 @@ async function ingestItems(ctx: ActionCtx, teamId: Id<"teams">, runId: Id<"runs"
   }
   if (invalid) await log(ctx, runId, `Skipped ${invalid} malformed item(s)`, { level: "warn" });
 
+  // Official account avatar → team logo (only fills a missing logo; never overwrites).
+  const avatar = items
+    .map((i) => (i as { authorAvatarUrl?: unknown }).authorAvatarUrl)
+    .find((u): u is string => typeof u === "string" && u.startsWith("https://"));
+  if (avatar) {
+    try {
+      const set = await ctx.runAction(internal.teams.setLogoIfMissing, { teamId, url: avatar });
+      if (set) await log(ctx, runId, "Saved the team logo from its TikTok profile picture");
+    } catch (e) {
+      await log(ctx, runId, `Couldn't save team logo: ${e instanceof Error ? e.message : e}`, { level: "warn" });
+    }
+  }
+
   let newCount = 0;
   for (let i = 0; i < posts.length; i += 25) {
     const { newIds } = await ctx.runMutation(internal.ingestDb.upsertPosts, {

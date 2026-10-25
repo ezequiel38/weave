@@ -1,7 +1,7 @@
 import { ConvexError, v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import { internalMutation, mutation, query } from "./_generated/server";
 import { platform } from "./schema";
-import { parseAccountInput } from "./lib/accountUrl";
+import { parseAccountInput, profileUrl } from "./lib/accountUrl";
 
 export const listForTeam = query({
   args: { teamId: v.id("teams") },
@@ -81,5 +81,41 @@ export const remove = mutation({
       .take(500);
     for (const p of posts) await ctx.db.patch(p._id, { accountId: undefined });
     await ctx.db.delete(accountId);
+  },
+});
+
+/** Discovery results → proposed accounts (skips ones the team already has). */
+export const addProposed = internalMutation({
+  args: {
+    teamId: v.id("teams"),
+    accounts: v.array(
+      v.object({ platform: v.union(v.literal("instagram"), v.literal("tiktok")), handle: v.string(), confidence: v.number(), note: v.string() }),
+    ),
+  },
+  returns: v.number(),
+  handler: async (ctx, { teamId, accounts }) => {
+    let added = 0;
+    for (const a of accounts) {
+      if (!/^[A-Za-z0-9._]{2,30}$/.test(a.handle)) continue;
+      const existing = await ctx.db
+        .query("accounts")
+        .withIndex("by_team_platform_handle", (q) => q.eq("teamId", teamId).eq("platform", a.platform).eq("handle", a.handle))
+        .unique();
+      if (existing) continue;
+      await ctx.db.insert("accounts", {
+        teamId,
+        platform: a.platform,
+        handle: a.handle,
+        url: profileUrl(a.platform, a.handle),
+        status: "proposed",
+        source: "discovery",
+        verification: {
+          level: a.confidence >= 0.8 ? "likely" : "unverified",
+          evidence: [a.note, "Suggested by Claude — check before including"].filter(Boolean),
+        },
+      });
+      added++;
+    }
+    return added;
   },
 });

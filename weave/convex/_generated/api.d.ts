@@ -10,6 +10,7 @@
 
 import type * as accounts from "../accounts.js";
 import type * as analyze from "../analyze.js";
+import type * as discover from "../discover.js";
 import type * as feed from "../feed.js";
 import type * as ingest from "../ingest.js";
 import type * as ingestDb from "../ingestDb.js";
@@ -32,6 +33,7 @@ import type {
 declare const fullApi: ApiFromModules<{
   accounts: typeof accounts;
   analyze: typeof analyze;
+  discover: typeof discover;
   feed: typeof feed;
   ingest: typeof ingest;
   ingestDb: typeof ingestDb;

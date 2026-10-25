@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { useMutation, useQuery } from "convex/react";
+import { useAction, useMutation, useQuery } from "convex/react";
 import { toast } from "sonner";
-import { BadgeCheck, CircleHelp, ExternalLink, Plus, ShieldQuestion, Trash2 } from "lucide-react";
+import { BadgeCheck, CircleHelp, ExternalLink, Loader2, Plus, ShieldQuestion, Sparkles, Trash2 } from "lucide-react";
 import { api } from "@/convex/_generated/api";
 import type { Doc } from "@/convex/_generated/dataModel";
 import { cn } from "@/lib/utils";
@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { PLATFORMS, PlatformBadge, PlatformGlyph, type Platform } from "./platform";
+import { usePasswordGate } from "./password-gate";
 
 /** Platforms the ingestion Actor actually covers. */
 const SUPPORTED: Platform[] = ["instagram", "tiktok"];
@@ -133,6 +134,36 @@ function AddAccount({ team }: { team: Doc<"teams"> }) {
   );
 }
 
+function SuggestAccounts({ team }: { team: Doc<"teams"> }) {
+  const suggest = useAction(api.discover.suggest);
+  const gate = usePasswordGate("Suggesting accounts");
+  return (
+    <>
+      <Button
+        size="sm"
+        variant="outline"
+        className="h-7 rounded-full text-xs"
+        disabled={gate.busy}
+        onClick={() =>
+          gate.run(async (password) => {
+            try {
+              const res = await suggest({ teamId: team._id, password });
+              if (!("locked" in res && res.locked)) (res.ok ? toast.success : toast.error)(res.message);
+              return res;
+            } catch (e) {
+              toast.error(e instanceof Error ? e.message : "Couldn't suggest accounts");
+              return {};
+            }
+          })
+        }
+      >
+        {gate.busy ? <Loader2 className="animate-spin" /> : <Sparkles />} Suggest accounts
+      </Button>
+      {gate.dialog}
+    </>
+  );
+}
+
 export function AccountsView({ team }: { team: Doc<"teams"> }) {
   const accounts = useQuery(api.accounts.listForTeam, { teamId: team._id });
   // Stable order (not by status) so rows don't jump when toggled.
@@ -149,9 +180,10 @@ export function AccountsView({ team }: { team: Doc<"teams"> }) {
       </p>
 
       <section className="mt-8 overflow-hidden rounded-2xl border bg-card">
-        <header className="flex items-center justify-between border-b px-4 py-3 sm:px-5">
+        <header className="flex items-center justify-between gap-3 border-b px-4 py-3 sm:px-5">
           <h2 className="text-sm font-medium">Connected profiles</h2>
-          <span className="text-xs text-muted-foreground">{approved} included</span>
+          <span className="ml-auto text-xs text-muted-foreground">{approved} included</span>
+          <SuggestAccounts team={team} />
         </header>
         {accounts === undefined ? (
           <div className="space-y-3 p-5">
@@ -159,7 +191,9 @@ export function AccountsView({ team }: { team: Doc<"teams"> }) {
             <Skeleton className="h-10" />
           </div>
         ) : sorted.length === 0 ? (
-          <p className="px-5 py-10 text-center text-sm text-muted-foreground">No accounts yet — add one below.</p>
+          <p className="px-5 py-10 text-center text-sm text-muted-foreground">
+            No accounts yet — use <span className="font-medium text-foreground">Suggest accounts</span> or add one below.
+          </p>
         ) : (
           <ul className="divide-y">
             {sorted.map((a) => (

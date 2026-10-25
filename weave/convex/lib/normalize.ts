@@ -33,6 +33,7 @@ export const actorPostSchema = z.object({
   links: z.array(z.string()).nullish(),
   transcript: nullableStr,
   authorName: nullableStr,
+  authorAvatarUrl: nullableStr,
 });
 
 export type ActorPost = z.infer<typeof actorPostSchema>;
