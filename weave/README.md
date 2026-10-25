@@ -19,10 +19,10 @@ clearly labelled fictional fixtures (amber **Sample** badges) for UI work.
 
 ```bash
 npx convex env set APIFY_TOKEN <token>
-npx convex env set APIFY_ACTOR_ID ezeq8/fcb-social-posts   # default
+npx convex env set APIFY_ACTOR_ID ezeq8/weave-actor   # default
 ```
 
-**Refresh** starts our Actor (`../actors/fcb-social-posts`, wrapping
+**Refresh** starts our Actor (`../actors/weave-actor`, wrapping
 `apify/instagram-post-scraper` + `clockworks/tiktok-scraper`) for the included
 Instagram/TikTok accounts (≤12 posts each by default, max 25). Convex polls the
 run, validates each item with zod (`convex/lib/normalize.ts`), and upserts

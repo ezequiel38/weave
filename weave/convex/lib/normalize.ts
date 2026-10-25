@@ -2,8 +2,8 @@ import { z } from "zod";
 import type { Platform } from "./accountUrl";
 
 /**
- * Adapter for the `fcb-social-posts` Actor's `UnifiedPost` dataset items
- * (actors/fcb-social-posts/src/main.ts). Fields marked "newer" are optional
+ * Adapter for the `weave-actor` Actor's `UnifiedPost` dataset items
+ * (actors/weave-actor/src/main.ts). Fields marked "newer" are optional
  * additions so older Actor builds still validate.
  */
 const nullableStr = z.string().nullish();

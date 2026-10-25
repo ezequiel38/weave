@@ -1,7 +1,7 @@
 {
     "$schema": "https://apify.com/schemas/v1/actor.ide.json",
     "actorSpecification": 1,
-    "name": "fcb-social-posts",
+    "name": "weave-actor",
     "title": "Scrape single page in TypeScript",
     "description": "Scrape data from single page with provided URL.",
     "version": "0.0",

@@ -9,8 +9,8 @@ import type { Id } from "./_generated/dataModel";
 import { normalizeActorPost, type NormalizedPost } from "./lib/normalize";
 import { isUnlocked } from "./lib/lock";
 
-/** Our Actor (actors/fcb-social-posts): wraps the IG + TikTok store scrapers. */
-const ACTOR_ID = process.env.APIFY_ACTOR_ID ?? "ezeq8/fcb-social-posts";
+/** Our Actor (actors/weave-actor): wraps the IG + TikTok store scrapers. */
+const ACTOR_ID = process.env.APIFY_ACTOR_ID ?? "ezeq8/weave-actor";
 /** Cost guards — keep development runs small. */
 const POSTS_PER_ACCOUNT = Math.min(Number(process.env.POSTS_PER_ACCOUNT ?? 12), 25);
 const NEWER_THAN = process.env.INGEST_NEWER_THAN ?? "7 days";

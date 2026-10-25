@@ -1,5 +1,5 @@
 {
-    "name": "fcb-social-posts",
+    "name": "weave-actor",
     "version": "0.0.1",
     "type": "module",
     "description": "Collects recent photos, videos, audio names and captions from FC Barcelona Instagram and TikTok.",

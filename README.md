@@ -5,4 +5,4 @@ duplicates and same-moment posts into single stories (rules → Elastic → Clau
 any original media.
 
 - [`weave/`](weave/) — the app (Next.js + Convex). Setup and architecture in [`weave/README.md`](weave/README.md).
-- [`actors/fcb-social-posts/`](actors/fcb-social-posts/) — the Apify Actor that collects posts (published as `ezeq8/fcb-social-posts`).
+- [`actors/weave-actor/`](actors/weave-actor/) — the Apify Actor that collects posts (published as `ezeq8/weave-actor`).
