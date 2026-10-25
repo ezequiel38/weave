@@ -113,7 +113,7 @@ export function FeedView({ team }: { team: Doc<"teams"> }) {
               <span>
                 <span className="font-medium text-foreground">{stats.posts} posts</span> woven into{" "}
                 <span className="font-medium text-foreground">{stats.stories} stories</span>
-                {saved > 0 && <> — {saved} repeats you don&apos;t have to scroll past</>}
+                {saved > 0 && <> — {saved} repeat{saved === 1 ? "" : "s"} you don&apos;t have to scroll past</>}
               </span>
             </p>
           )}
@@ -137,7 +137,7 @@ export function FeedView({ team }: { team: Doc<"teams"> }) {
             ))}
           </div>
           {(
-            <div role="group" aria-label="Layout" className="inline-flex rounded-full border bg-card p-1">
+            <div role="group" aria-label="Layout" className="hidden rounded-full border bg-card p-1 md:inline-flex">
               {([
                 { id: "grid", label: "Grid view", icon: LayoutGrid },
                 { id: "list", label: "List view", icon: List },
@@ -185,14 +185,14 @@ export function FeedView({ team }: { team: Doc<"teams"> }) {
           stories.length === 0 ? (
             <p className="text-center text-sm text-muted-foreground">Posts are still being analysed into stories…</p>
           ) : (
-            <div className={grid ? "grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" : "mx-auto max-w-xl space-y-4"}>
+            <div className={grid ? "grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" : "mx-auto max-w-xl space-y-4"}>
               {stories.map((s, i) => (
                 <StoryCard key={s._id} story={s} index={i} className={grid ? "h-full" : undefined} />
               ))}
             </div>
           )
         ) : (
-          <div className={grid ? "grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" : "mx-auto max-w-xl space-y-4"}>
+          <div className={grid ? "grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" : "mx-auto max-w-xl space-y-4"}>
             {posts.map((p, i) => (
               <PostCard key={p._id} post={p} index={i} className="h-full" />
             ))}

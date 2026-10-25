@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useAction, useMutation, useQuery } from "convex/react";
 import { toast } from "sonner";
 import { BadgeCheck, CircleHelp, ExternalLink, Loader2, Plus, ShieldQuestion, Sparkles, Trash2 } from "lucide-react";
@@ -14,6 +15,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { PLATFORMS, PlatformBadge, PlatformGlyph, type Platform } from "./platform";
 import { usePasswordGate } from "./password-gate";
+import { RefreshButton } from "./refresh-button";
 
 /** Platforms the ingestion Actor actually covers. */
 const SUPPORTED: Platform[] = ["instagram", "tiktok"];
@@ -165,6 +167,7 @@ function SuggestAccounts({ team }: { team: Doc<"teams"> }) {
 }
 
 export function AccountsView({ team }: { team: Doc<"teams"> }) {
+  const router = useRouter();
   const accounts = useQuery(api.accounts.listForTeam, { teamId: team._id });
   // Stable order (not by status) so rows don't jump when toggled.
   const sorted = [...(accounts ?? [])].filter((a) => SUPPORTED.includes(a.platform)).sort((a, b) => a.platform.localeCompare(b.platform) || a._creationTime - b._creationTime);
@@ -201,6 +204,18 @@ export function AccountsView({ team }: { team: Doc<"teams"> }) {
             ))}
           </ul>
         )}
+      </section>
+
+      <section className="mt-6 flex flex-col items-start gap-4 rounded-2xl border bg-card p-4 sm:flex-row sm:items-center sm:p-5">
+        <div className="flex-1">
+          <h2 className="text-sm font-medium">Ready to weave?</h2>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            {approved
+              ? `Fetches recent posts from the ${approved} included account${approved === 1 ? "" : "s"}, merges them into stories, then opens the feed.`
+              : "Include at least one account above first."}
+          </p>
+        </div>
+        {approved > 0 && <RefreshButton teamId={team._id} size="lg" onDone={() => router.push(`/t/${team.slug}`)} />}
       </section>
 
       <section className="mt-6 rounded-2xl border bg-card p-4 sm:p-5">

@@ -1,13 +1,21 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { Check, ChevronsUpDown, Plus } from "lucide-react";
 import { useQuery } from "convex/react";
 import type { ReactNode } from "react";
 import { api } from "@/convex/_generated/api";
 import type { Doc } from "@/convex/_generated/dataModel";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Logo } from "./logo";
 import { RunStatus } from "./run-status";
 import { RefreshButton } from "./refresh-button";
@@ -40,6 +48,44 @@ export function TeamMonogram({
   );
 }
 
+/** Header team name → menu of every weave, to jump between teams (keeps the current tab). */
+function TeamSwitcher({ team }: { team: Doc<"teams"> & { logoUrl?: string | null } }) {
+  const teams = useQuery(api.teams.list);
+  const router = useRouter();
+  const pathname = usePathname();
+  const onAccounts = pathname.endsWith("/accounts");
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger aria-label={`Switch team (current: ${team.name})`} className="flex min-w-0 items-center gap-2 rounded-full p-1 sm:pr-2 outline-none transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring">
+        <TeamMonogram team={team} className="size-7 rounded-lg text-[9px]" />
+        {/* Small screens: logo only (the menu still opens on tap) */}
+        <span className="hidden truncate text-sm font-medium sm:inline">{team.name}</span>
+        <ChevronsUpDown className="hidden size-3.5 shrink-0 text-muted-foreground sm:block" />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="w-64">
+        {(teams ?? []).map((t) => (
+          <DropdownMenuItem
+            key={t._id}
+            onClick={() => router.push(`/t/${t.slug}${onAccounts ? "/accounts" : ""}`)}
+            className="gap-2.5 py-1.5"
+          >
+            <TeamMonogram team={t} className="size-6 rounded-md text-[8px]" />
+            <span className="flex-1 truncate">{t.name}</span>
+            {t._id === team._id && <Check className="text-muted-foreground" />}
+          </DropdownMenuItem>
+        ))}
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={() => router.push("/")} className="gap-2.5 py-1.5 text-muted-foreground">
+          <span className="flex size-6 items-center justify-center rounded-md border border-dashed">
+            <Plus className="size-3.5" />
+          </span>
+          Add a team or brand
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
 export function TeamShell({ slug, children }: { slug: string; children: (team: Doc<"teams">) => ReactNode }) {
   const team = useQuery(api.teams.bySlug, { slug });
   const pathname = usePathname();
@@ -56,10 +102,7 @@ export function TeamShell({ slug, children }: { slug: string; children: (team: D
           <Logo />
           <span className="h-5 w-px bg-border" />
           {team ? (
-            <div className="flex min-w-0 items-center gap-2">
-              <TeamMonogram team={team} className="size-7 rounded-lg text-[9px]" />
-              <span className="truncate text-sm font-medium">{team.name}</span>
-            </div>
+            <TeamSwitcher team={team} />
           ) : (
             <Skeleton className="h-6 w-32" />
           )}

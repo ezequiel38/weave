@@ -115,7 +115,7 @@ export const stats = query({
   },
 });
 
-/** Landing-page example: the richest real merged story (most posts, Claude summary, has media). */
+/** Landing-page examples: up to 8 real merged stories, richest first (most posts, Claude summary, media). */
 export const showcase = query({
   args: {},
   handler: async (ctx) => {
@@ -128,8 +128,8 @@ export const showcase = query({
         Number(b.summarySource === "claude") - Number(a.summarySource === "claude") ||
         b.lastPostedAt - a.lastPostedAt,
     );
-    const story = stories[0];
-    if (!story) return null;
+    const out = [];
+    for (const story of stories.slice(0, 8)) {
     const team = await ctx.db.get(story.teamId);
     const links = await ctx.db.query("storyPosts").withIndex("by_story", (q) => q.eq("storyId", story._id)).take(4);
     const posts = [];
@@ -137,15 +137,18 @@ export const showcase = query({
       const post = await ctx.db.get(l.postId);
       if (!post) continue;
       const withM = await withMedia(ctx, post);
-      posts.push({ _id: post._id, platform: post.platform, text: post.text, media: withM.media.slice(0, 1) });
+      posts.push({ _id: post._id, platform: post.platform, role: l.role, text: post.text, media: withM.media.slice(0, 1) });
     }
-    return {
+    out.push({
+      _id: story._id,
       title: story.title,
       summary: story.summary,
       postCount: story.postCount,
       platforms: story.platforms,
       team: team ? { name: team.name, slug: team.slug } : null,
       posts,
-    };
+    });
+    }
+    return out;
   },
 });

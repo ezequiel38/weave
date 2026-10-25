@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useQuery } from "convex/react";
 import { ArrowRight, Layers } from "lucide-react";
@@ -9,12 +10,28 @@ import { MediaTile } from "./media-tile";
 import { PlatformBadge, PlatformStack, type Platform } from "./platform";
 
 const STRAND_COLORS = ["#f472b6", "#a78bfa", "#fb7185", "#60a5fa"];
-const ROTATIONS = ["-rotate-3", "rotate-2", "-rotate-1", "rotate-3"];
+// Tilted cards only where there is room (literal classes so Tailwind sees them).
+const ROTATIONS = ["sm:-rotate-3", "sm:rotate-2", "sm:-rotate-1", "sm:rotate-3"];
 
 function Strands({ count }: { count: number }) {
   const ys = Array.from({ length: count }, (_, i) => (200 / (count + 1)) * (i + 1));
   return (
-    <svg viewBox="0 0 60 200" className="h-48 w-10 sm:w-14">
+    <>
+      {/* Small screens: sources sit side by side above the card, strands run down */}
+      <svg viewBox="0 0 200 48" className="h-10 w-full sm:hidden" aria-hidden>
+        {ys.map((x, i) => (
+          <path
+            key={i}
+            d={`M${x} 0 C ${x} 24, 100 24, 100 48`}
+            fill="none"
+            strokeWidth="2"
+            strokeLinecap="round"
+            stroke={STRAND_COLORS[i % STRAND_COLORS.length]}
+            strokeDasharray="4 5"
+          />
+        ))}
+      </svg>
+    <svg viewBox="0 0 60 200" className="hidden h-48 w-14 sm:block" aria-hidden>
       {ys.map((y, i) => (
         <path
           key={i}
@@ -27,27 +44,47 @@ function Strands({ count }: { count: number }) {
         />
       ))}
     </svg>
+    </>
   );
 }
 
 /** Live example: the best real merged story in the database, converging into its card. */
 export function HeroVisual() {
-  const story = useQuery(api.feed.showcase);
-  if (story === undefined) return <div className="mx-auto aspect-[4/3] w-full max-w-xl" />;
-  if (story === null) return <IllustrativeHero />;
-  const tiles = story.posts.flatMap((p) => (p.media[0] ? [{ m: p.media[0], platform: p.platform }] : [])).slice(0, 3);
+  const stories = useQuery(api.feed.showcase);
+  const [n, setN] = useState(0);
+  const count = stories?.length ?? 0;
+  // Shuffle through real weaves; start at a random one so reloads vary.
+  useEffect(() => {
+    if (count < 2) return;
+    const start = setTimeout(() => setN(Math.floor(Math.random() * count)), 0);
+    const tick = setInterval(() => setN((i) => (i + 1) % count), 6000);
+    return () => {
+      clearTimeout(start);
+      clearInterval(tick);
+    };
+  }, [count]);
+  if (stories === undefined) return <div className="mx-auto aspect-[4/3] w-full max-w-xl" />;
+  const story = stories[n % Math.max(count, 1)];
+  if (!story) return <IllustrativeHero />;
+  // Exact reposts show their media once, like the feed (prefer Instagram: no TikTok overlay).
+  const dupGroup = story.posts.some((p) => p.role === "duplicate") ? story.posts.filter((p) => p.role !== "complement") : [];
+  const keep = dupGroup.find((p) => p.platform === "instagram") ?? dupGroup[0];
+  const tiles = story.posts
+    .filter((p) => !dupGroup.includes(p) || p === keep)
+    .flatMap((p) => (p.media[0] ? [{ m: p.media[0], platform: p.platform }] : []))
+    .slice(0, 3);
 
   return (
-    <div className="relative mx-auto grid w-full max-w-xl grid-cols-[1fr_auto_1.25fr] items-center gap-3 sm:gap-5">
-      <div className="flex flex-col gap-2.5">
+    <div key={story._id} className="relative mx-auto flex w-full max-w-sm flex-col items-stretch sm:grid sm:max-w-xl sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1.25fr)] sm:items-center sm:gap-5">
+      <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-col sm:gap-2.5">
         {story.posts.map((p, i) => (
           <div
             key={p._id}
-            className={`animate-weave-in flex items-center gap-2 rounded-xl border bg-card p-2 shadow-sm ${ROTATIONS[i % 4]}`}
+            className={`animate-weave-in flex min-w-0 items-center gap-2 rounded-xl border bg-card p-2 shadow-sm ${ROTATIONS[i % 4]}`}
             style={{ animationDelay: `${i * 90}ms` }}
           >
             {p.media[0] ? (
-              <MediaTile media={p.media[0]} compact className="size-10 shrink-0 rounded-lg" />
+              <MediaTile media={p.media[0]} compact frame className="size-10 shrink-0 rounded-lg" />
             ) : (
               <span className="size-10 shrink-0 rounded-lg bg-muted" />
             )}
@@ -104,12 +141,12 @@ const STRANDS: { platform: Platform; line: string; hue: number }[] = [
 /** Fallback before any real weave exists: four posts converging into one story card. */
 function IllustrativeHero() {
   return (
-    <div className="relative mx-auto grid w-full max-w-xl grid-cols-[1fr_auto_1.25fr] items-center gap-3 sm:gap-5" aria-hidden>
-      <div className="flex flex-col gap-2.5">
+    <div className="relative mx-auto flex w-full max-w-sm flex-col items-stretch sm:grid sm:max-w-xl sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1.25fr)] sm:items-center sm:gap-5" aria-hidden>
+      <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-col sm:gap-2.5">
         {STRANDS.map((s, i) => (
           <div
             key={i}
-            className={`animate-weave-in flex items-center gap-2 rounded-xl border bg-card p-2 shadow-sm ${ROTATIONS[i]}`}
+            className={`animate-weave-in flex min-w-0 items-center gap-2 rounded-xl border bg-card p-2 shadow-sm ${ROTATIONS[i]}`}
             style={{ animationDelay: `${i * 90}ms` }}
           >
             <span

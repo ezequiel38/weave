@@ -41,7 +41,7 @@ export function PostCard({ post, index = 0, className }: { post: RawPost; index?
       </header>
       {first && (
         <div className="relative">
-          <MediaTile media={first} className="aspect-[4/5]" onOpen={() => openAt("media")} />
+          <MediaTile media={first} className="aspect-[4/3] sm:aspect-[4/5]" onOpen={() => openAt("media")} />
           {post.media.length > 1 && (
             <span className="pointer-events-none absolute right-2 top-2 rounded-full bg-black/60 px-2 py-0.5 text-[11px] text-white">
               1/{post.media.length}

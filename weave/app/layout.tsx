@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Instrument_Serif } from "next/font/google";
+import { Geist, Geist_Mono, Instrument_Serif, Noto_Color_Emoji } from "next/font/google";
 import { ConvexClientProvider } from "@/components/convex-client-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "next-themes";
@@ -22,6 +22,14 @@ const instrument = Instrument_Serif({
   subsets: ["latin"],
 });
 
+// Fallback for emoji the OS font lacks (e.g. Unicode 14+ on Windows 10).
+const emoji = Noto_Color_Emoji({
+  variable: "--font-emoji",
+  weight: "400",
+  subsets: ["emoji"],
+  preload: false,
+});
+
 export const metadata: Metadata = {
   title: "Weave",
   description:
@@ -33,7 +41,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html
       suppressHydrationWarning
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} ${instrument.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${instrument.variable} ${emoji.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false} disableTransitionOnChange>

@@ -6,7 +6,6 @@ import { toast } from "sonner";
 import {
   ChevronRight,
   ExternalLink,
-  Images,
   Layers,
   Scissors,
   TriangleAlert,
@@ -64,7 +63,7 @@ function Mosaic({ story, tiles, onOpen }: { story: UnifiedStory; tiles: Tile[]; 
         : "grid-cols-3 grid-rows-2";
 
   return (
-    <div className={cn("grid aspect-[4/5] gap-0.5 overflow-hidden bg-border", layout)}>
+    <div className={cn("grid aspect-[4/3] gap-0.5 overflow-hidden bg-border sm:aspect-[4/5]", layout)}>
       {shown.map(({ m, p }, i) => (
         <div
           key={m._id}
@@ -303,11 +302,6 @@ export function StoryCard({ story, index = 0, className }: { story: UnifiedStory
             </span>
           ) : (
             <span>Single post</span>
-          )}
-          {story.mediaCount > 1 && (
-            <span className="inline-flex items-center gap-1">
-              <Images className="size-3" /> {story.mediaCount} media kept
-            </span>
           )}
           <span aria-hidden>·</span>
           <time dateTime={new Date(story.lastPostedAt).toISOString()}>{timeAgo(story.lastPostedAt)}</time>

@@ -1,7 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // Hide the Next.js dev-tools badge (bottom-left); it only exists in `next dev` anyway.
+  devIndicators: false,
   cacheComponents: true,
   partialPrefetching: true,
   turbopack: {

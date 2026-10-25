@@ -7,7 +7,7 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-geist-sans), var(--font-emoji);
   --font-mono: var(--font-geist-mono);
   --font-heading: var(--font-instrument);
   --color-sidebar-ring: var(--sidebar-ring);
@@ -130,7 +130,7 @@
 }
 @layer utilities {
   .font-display {
-    font-family: var(--font-instrument), ui-serif, Georgia, serif;
+    font-family: var(--font-instrument), var(--font-emoji), ui-serif, Georgia, serif;
     letter-spacing: -0.01em;
   }
   .paper-grain {
@@ -145,4 +145,10 @@
 }
 .animate-weave-in {
   animation: weave-in 0.45s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+/* Emoji are taller than the tight display leading; give clamped titles room so
+   line-clamp's overflow clipping doesn't shave their tops. */
+.font-display[class*="line-clamp"] {
+  padding-top: 0.14em;
 }

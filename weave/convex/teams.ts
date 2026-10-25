@@ -5,6 +5,17 @@ import type { Doc } from "./_generated/dataModel";
 
 const PALETTE = ["#4f46e5", "#0f766e", "#b45309", "#be123c", "#1d4ed8", "#7c3aed", "#15803d"];
 
+/** "golden state warriors" → "Golden State Warriors"; leaves mixed-case input ("FC Barcelona") alone. */
+export function displayName(name: string): string {
+  const clean = name.trim().replace(/\s+/g, " ").slice(0, 80);
+  if (clean !== clean.toLowerCase()) return clean;
+  const small = new Set(["and", "of", "the", "de", "del", "la", "y", "&"]);
+  return clean
+    .split(" ")
+    .map((w, i) => (i > 0 && small.has(w) ? w : w.charAt(0).toUpperCase() + w.slice(1)))
+    .join(" ");
+}
+
 function slugify(name: string) {
   return name
     .toLowerCase()
@@ -29,7 +40,7 @@ export const create = mutation({
     ),
   },
   handler: async (ctx, { name, kind }) => {
-    const clean = name.trim().slice(0, 80);
+    const clean = displayName(name);
     const slug = slugify(clean);
     if (!slug) throw new ConvexError("Please enter a name");
     const existing = await ctx.db
@@ -134,5 +145,23 @@ export const forDiscovery = internalQuery({
   handler: async (ctx, { teamId }) => {
     const t = await ctx.db.get(teamId);
     return t ? { name: t.name, kind: t.kind, website: t.website } : null;
+  },
+});
+
+/** One-off repair for teams created before displayName existed. */
+export const fixNames = internalMutation({
+  args: {},
+  returns: v.number(),
+  handler: async (ctx) => {
+    let fixed = 0;
+    for (const t of await ctx.db.query("teams").take(200)) {
+      const name = displayName(t.name);
+      if (name !== t.name) {
+        const words = name.split(/\s+/).filter(Boolean);
+        await ctx.db.patch(t._id, { name, monogram: words.map((w) => w[0]).join("").slice(0, 3).toUpperCase() });
+        fixed++;
+      }
+    }
+    return fixed;
   },
 });

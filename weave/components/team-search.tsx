@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation, useQuery } from "convex/react";
 import { toast } from "sonner";
@@ -23,12 +23,21 @@ export function TeamSearch() {
   );
   const exact = matches.some((t) => t.name.toLowerCase() === needle);
 
+  // Spinner = (async work) or (navigation in flight). Tying it to the transition means it
+  // clears when navigation finishes — including when the page is restored on "back".
+  const [navigating, startNav] = useTransition();
+  const [navKey, setNavKey] = useState<string | null>(null);
+  const spinning = (key: string) => busy === key || (navigating && navKey === key);
+
   async function go(key: string, fn: () => Promise<string>) {
     setBusy(key);
     try {
-      router.push(`/t/${await fn()}`);
+      const slug = await fn();
+      setNavKey(key);
+      startNav(() => router.push(`/t/${slug}`));
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Something went wrong");
+    } finally {
       setBusy(null);
     }
   }
@@ -74,7 +83,7 @@ export function TeamSearch() {
                 <span className="block text-sm font-medium">FC Barcelona</span>
                 <span className="block text-xs text-muted-foreground">Demo team · 2 official accounts</span>
               </span>
-              {busy === "barca" ? <Loader2 className="size-4 animate-spin" /> : <ArrowRight className="size-4 text-muted-foreground" />}
+              {spinning("barca") ? <Loader2 className="size-4 animate-spin" /> : <ArrowRight className="size-4 text-muted-foreground" />}
             </button>
           </li>
         )}
@@ -89,7 +98,7 @@ export function TeamSearch() {
                 <span className="block text-sm font-medium">{t.name}</span>
                 <span className="block text-xs capitalize text-muted-foreground">{t.tagline ?? t.kind}</span>
               </span>
-              {busy === t.slug ? <Loader2 className="size-4 animate-spin" /> : <ArrowRight className="size-4 text-muted-foreground" />}
+              {spinning(t.slug) ? <Loader2 className="size-4 animate-spin" /> : <ArrowRight className="size-4 text-muted-foreground" />}
             </button>
           </li>
         ))}
@@ -102,7 +111,7 @@ export function TeamSearch() {
               )}
             >
               <span className="flex size-10 items-center justify-center rounded-xl bg-muted">
-                {busy === "create" ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />}
+                {spinning("create") ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />}
               </span>
               Start a feed for “{q.trim()}”
             </button>

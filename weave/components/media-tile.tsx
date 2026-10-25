@@ -50,6 +50,7 @@ export function MediaTile({
   sizes,
   onOpen,
   compact = false,
+  frame = false,
 }: {
   media: MediaLike;
   platform?: Platform;
@@ -59,6 +60,8 @@ export function MediaTile({
   onOpen?: () => void;
   /** Small thumbnail: shrink the play button, hide the duration. */
   compact?: boolean;
+  /** With `compact`, still load a poster-less video's first frame (few tiles, e.g. the landing example). */
+  frame?: boolean;
 }) {
   const [failed, setFailed] = useState(false);
   const src = media.kind === "image" ? media.url : (media.thumbnailUrl ?? media.url);
@@ -82,7 +85,7 @@ export function MediaTile({
     >
       {isSample ? (
         <SamplePlaceholder hue={Number(src.slice(7)) || 0} kind={media.kind} />
-      ) : directVideo && !media.thumbnailUrl && !compact ? (
+      ) : directVideo && !media.thumbnailUrl && (!compact || frame) ? (
         // No poster frame from the scraper — let the browser render the first frame.
         <video src={`${media.url}#t=0.1`} preload="metadata" muted playsInline className="absolute inset-0 size-full object-cover" />
       ) : embed && !media.thumbnailUrl ? (
